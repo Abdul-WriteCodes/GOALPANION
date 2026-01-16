@@ -43,35 +43,16 @@ if submit:
             "deadline": str(deadline)
         }
 
-        # --- Generate heuristic milestones (STATIC, 4 ONLY) ---
+        # --- Internal structure (NOT shown yet) ---
         milestones = generate_plan(goal, constraints)
 
-        st.subheader("Milestones (Fixed Phases)")
-        for i, m in enumerate(milestones, start=1):
-            st.markdown(f"**Milestone {i}:** {m}")
-
-        # --- Progress Tracking (Numeric, Not Categorical) ---
-        st.subheader("Your Progress")
-
         goal_id = goal.lower().replace(" ", "_")
-        saved_progress = progress_manager.load_progress(goal_id)
+        progress = progress_manager.load_progress(goal_id) or {
+            m: 0 for m in milestones
+        }
 
-        progress = {}
-
-        for i, m in enumerate(milestones):
-            progress[m] = st.slider(
-                label=m,
-                min_value=0,
-                max_value=100,
-                value=int(saved_progress.get(m, 0)),
-                step=10,
-                key=f"{goal_id}_{i}"
-            )
-
-        progress_manager.save_progress(goal_id, progress)
-
-        # --- Generate adaptive detailed plan using LLM ---
-        with st.spinner("Generating adaptive detailed plan with LLM..."):
+        # --- LLM FIRST ---
+        with st.spinner("Thinking through your goal and constraints..."):
             detailed_plan = generate_detailed_plan(
                 goal=goal,
                 milestones=milestones,
@@ -79,15 +60,8 @@ if submit:
                 progress=progress
             )
 
-        st.subheader("Adaptive Detailed Plan")
+        st.subheader("Your Adaptive Study Plan")
         st.write(detailed_plan)
 
-        # --- Overall Progress Visualization ---
-        average_progress = (
-            sum(progress.values()) / len(progress)
-            if progress else 0
-        )
-
-        st.subheader("Overall Progress")
-        st.progress(average_progress / 100)
-        st.write(f"Average completion: {int(average_progress)}%")
+        # --- (Optional) Save progress silently ---
+        progress_manager.save_progress(goal_id, progress)
