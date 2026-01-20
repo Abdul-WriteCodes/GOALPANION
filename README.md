@@ -13,7 +13,6 @@ By combining **heuristic milestone logic** with **LLM reasoning**, ACHIEVIT prov
   <img src="assets/Achievit.jpg" alt="Achievit Logo" style="width:100%; max-width:800px;" />
 </p>
 
----
 
 ## Architecture & Key Features
 
