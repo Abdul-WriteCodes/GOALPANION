@@ -91,9 +91,3 @@ ACHIEVIT uses a layered, human-in-the-loop architecture:
 - Provides **progress tracking and adaptive updates** for ongoing goal achievement  
 
 ---
-
-## Getting Started
-
-1. Clone the repository:  
-```bash
-git clone https://github.com/<your-username>/achievit.git
