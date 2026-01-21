@@ -1,14 +1,40 @@
 import streamlit as st
 from datetime import date, datetime
 
-from agents.heuristic import generate_plan
+from agents.heuristic import (
+    generate_plan,
+    initialize_progress,
+)
 from agents.llm_agent import generate_detailed_plan
 from utils.validation import validate_goal_input
 from utils import progress_manager
 from utils.exporters import plan_to_docx
 
+
 # ------------------------------
-# Initialize session state
+# Helper Functions
+# ------------------------------
+def compute_progress(progress_matrix):
+    computed = {}
+    for milestone, subtasks in progress_matrix.items():
+        total = len(subtasks)
+        done = sum(subtasks.values())
+        computed[milestone] = int((done / total) * 100)
+    return computed
+
+
+def summarize_subtasks(progress_matrix):
+    summary = {}
+    for milestone, subtasks in progress_matrix.items():
+        summary[milestone] = {
+            "completed": [s for s, done in subtasks.items() if done],
+            "pending": [s for s, done in subtasks.items() if not done],
+        }
+    return summary
+
+
+# ------------------------------
+# Initialize Session State
 # ------------------------------
 defaults = {
     "plan_generated": False,
@@ -20,12 +46,13 @@ defaults = {
     "detailed_plan_original": "",
     "start_date": None,
     "goal_id": "",
-    "adapted": False
+    "adapted": False,
 }
 
 for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
+
 
 # ------------------------------
 # Page Setup
@@ -35,10 +62,11 @@ st.set_page_config(page_title="ACHIEVIT", layout="centered")
 st.markdown(
     "<div style='text-align: center;'>"
     "<h1>🎭 ACHIEVIT</h1>"
-    "<p style='font-size: 16px; color: cyan;'>Powered by Large Language Model</p>"
+    "<p style='font-size: 16px; color: cyan;'>Powered by Large Language Models</p>"
     "</div>",
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
+
 
 # ------------------------------
 # Sidebar Inputs
@@ -47,12 +75,12 @@ st.sidebar.header("Goal Control Panel")
 
 goal_type = st.sidebar.selectbox(
     "Select Goal Type",
-    ["Exam", "Assignment", "Dissertation / Thesis"]
+    ["Exam", "Assignment", "Dissertation / Thesis"],
 )
 
 goal_input = st.sidebar.text_area(
     f"Clearly explain your {goal_type} goal, give context and important details:",
-    height=160
+    height=160,
 )
 
 st.sidebar.markdown("---")
@@ -63,25 +91,27 @@ with st.sidebar.expander("Constraints", expanded=True):
         "Hours per day you can dedicate to this",
         min_value=1,
         max_value=24,
-        value=2
+        value=2,
     )
     skill_level = st.selectbox(
         "Skill level",
-        ["Novice", "Intermediate", "Expert"]
+        ["Novice", "Intermediate", "Expert"],
     )
     deadline = st.date_input(
         "What is your deadline or time frame for this",
-        min_value=date.today()
+        min_value=date.today(),
     )
+
 
 # ------------------------------
 # Main Panel
 # ------------------------------
 st.markdown("### Welcome to ACHIEVIT 👋")
 st.markdown(
-    "I’m your AI-powered goal planning companion. "
+    "I’m your AI-powered academic planning companion. "
     "Enter your goal and constraints in the sidebar to get started."
 )
+
 
 # ------------------------------
 # Generate Plan
@@ -101,7 +131,7 @@ if st.button("🚀 Generate Plan", type="primary"):
         st.session_state.constraints = {
             "hours_per_day": hours_per_day,
             "skill_level": skill_level,
-            "deadline": str(deadline)
+            "deadline": str(deadline),
         }
 
         st.session_state.start_date = datetime.today().date()
@@ -110,20 +140,23 @@ if st.button("🚀 Generate Plan", type="primary"):
             goal_input, st.session_state.constraints
         )
 
-        st.session_state.progress = {
-            m: 0 for m in st.session_state.milestones
-        }
+        st.session_state.progress = initialize_progress(
+            st.session_state.milestones,
+            st.session_state.goal,
+        )
 
         with st.spinner("Thinking through your goal and constraints..."):
             plan_text = generate_detailed_plan(
                 goal=st.session_state.goal,
                 milestones=st.session_state.milestones,
                 constraints=st.session_state.constraints,
-                progress=st.session_state.progress
+                progress=compute_progress(st.session_state.progress),
+                subtasks=summarize_subtasks(st.session_state.progress),
             )
 
         st.session_state.detailed_plan_original = plan_text
         st.session_state.detailed_plan = plan_text
+
 
 # ------------------------------
 # Display Original Plan
@@ -133,9 +166,6 @@ if st.session_state.plan_generated:
     st.subheader("📘 Your Original Plan")
     st.write(st.session_state.detailed_plan_original)
 
-    # ------------------------------
-    # Download Original Plan
-    # ------------------------------
     st.markdown("---")
     st.subheader("💾 Download Original Plan")
 
@@ -143,7 +173,7 @@ if st.session_state.plan_generated:
         title="ACHIEVIT – Original Plan",
         goal=st.session_state.goal,
         constraints=st.session_state.constraints,
-        plan_text=st.session_state.detailed_plan_original
+        plan_text=st.session_state.detailed_plan_original,
     )
 
     st.download_button(
@@ -151,42 +181,58 @@ if st.session_state.plan_generated:
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        type="primary"
+        type="primary",
     )
 
-    # ------------------------------
-    # Execution Layer
-    # ------------------------------
+
+# ------------------------------
+# Execution Layer (CHECKBOX MATRIX)
+# ------------------------------
+if st.session_state.plan_generated:
     st.markdown("---")
     st.subheader("✅ Execute Your Plan")
-    st.caption("Adjust the slider to indicate your progress (0–100%).")
+    st.caption("Mark completed subtasks. Progress updates automatically.")
 
     updated_progress = {}
-    for milestone in st.session_state.milestones:
-        updated_progress[milestone] = st.slider(
-            milestone,
-            0,
-            100,
-            st.session_state.progress.get(milestone, 0),
-            key=f"milestone_{milestone}"
-        )
+
+    for milestone, subtasks in st.session_state.progress.items():
+        st.markdown(f"### 🎯 {milestone}")
+        updated_progress[milestone] = {}
+
+        for subtask, completed in subtasks.items():
+            updated_progress[milestone][subtask] = st.checkbox(
+                subtask,
+                value=completed,
+                key=f"{milestone}_{subtask}",
+            )
 
     if updated_progress != st.session_state.progress:
         st.session_state.progress = updated_progress
-        progress_manager.save_progress(
-            st.session_state.goal_id, updated_progress
-        )
-        st.success("Progress updated successfully.")
 
-    # ------------------------------
-    # Deadline Risk Check
-    # ------------------------------
-    total_progress = sum(updated_progress.values()) / len(updated_progress)
+       
+        progress_manager.save_progress(
+            st.session_state.goal_id,
+            execution_matrix=updated_progress,
+            computed_progress=compute_progress(updated_progress),
+        )
+
+
+        st.success("Progress updated from completed subtasks.")
+
+
+# ------------------------------
+# Deadline Risk Check
+# ------------------------------
+if st.session_state.plan_generated:
+    computed_progress = compute_progress(st.session_state.progress)
+    total_progress = sum(computed_progress.values()) / len(computed_progress)
+
     today = datetime.today().date()
 
     if deadline > st.session_state.start_date:
         days_total = (deadline - st.session_state.start_date).days
         days_elapsed = (today - st.session_state.start_date).days
+
         expected_progress = (
             (days_elapsed / days_total) * 100 if days_total > 0 else 100
         )
@@ -198,6 +244,7 @@ if st.session_state.plan_generated:
                 f"Expected: {expected_progress:.1f}%"
             )
 
+
 # ------------------------------
 # Adapt Plan
 # ------------------------------
@@ -208,7 +255,8 @@ if st.session_state.plan_generated and st.button("🔄 Adapt Plan Based on My Pr
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
             constraints=st.session_state.constraints,
-            progress=st.session_state.progress
+            progress=compute_progress(st.session_state.progress),
+            subtasks=summarize_subtasks(st.session_state.progress),
         )
 
     st.session_state.detailed_plan = adapted_plan
@@ -218,8 +266,9 @@ if st.session_state.plan_generated and st.button("🔄 Adapt Plan Based on My Pr
     st.subheader("🔁 Updated Adaptive Plan")
     st.write(st.session_state.detailed_plan)
 
+
 # ------------------------------
-# Download Adaptive Plan (ONLY AFTER ADAPTATION)
+# Download Adaptive Plan
 # ------------------------------
 if st.session_state.adapted:
     st.markdown("---")
@@ -229,37 +278,36 @@ if st.session_state.adapted:
         title="ACHIEVIT – Adaptive Plan",
         goal=st.session_state.goal,
         constraints=st.session_state.constraints,
-        plan_text=st.session_state.detailed_plan
+        plan_text=st.session_state.detailed_plan,
     )
 
     st.download_button(
         "⬇️ Download Adaptive Plan (DOCX)",
         data=adaptive_docx,
         file_name=f"{st.session_state.goal_id}_adaptive_plan.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-        type="primary"
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        type="primary",
     )
 
 
-
-
 # ------------------------------
-# Progress Overview# ------------------------------
+# Progress Overview
+# ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
     st.subheader("📊 Progress Overview")
-    st.table(st.session_state.progress)
-    
- # ------------------------------
-# Start New Goal (FINAL ACTION)
+    st.table(compute_progress(st.session_state.progress))
+
+
+# ------------------------------
+# Start New Goal
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
-    if st.button("🆕 Start New Goal"):
+    if st.button("🆕 Start New Goal", type="primary"):
         for key, value in defaults.items():
             st.session_state[key] = value
         st.rerun()
-
 
 
 # ------------------------------
@@ -275,5 +323,5 @@ st.markdown(
         © 2025 Abdul Write & Codes.
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )

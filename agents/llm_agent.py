@@ -6,50 +6,84 @@ from google import genai
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-def generate_detailed_plan(goal, milestones, constraints, progress=None):
+
+def generate_detailed_plan(
+    goal: str,
+    milestones: list[str],
+    constraints: dict,
+    progress: dict,
+    subtasks: dict,
+):
     """
     Generate an adaptive, milestone-based academic plan.
-    progress: dict mapping milestone -> completion percentage (0–100)
-    """
 
-    if progress is None:
-        progress = {m: 0 for m in milestones}
+    progress: dict mapping milestone -> completion percentage (0–100)
+    subtasks: dict mapping milestone -> {
+        "completed": [subtasks],
+        "pending": [subtasks]
+    }
+    """
 
     prompt = f"""
 You are a seasoned academic planning assistant.
 
-The student has ONE academic goal and EXACTLY FOUR high-level milestones.
-Milestones are fixed phases and must NOT be broken into new milestones.
+This system uses a FIXED heuristic structure.
+You MUST respect the given milestones and subtasks.
+Do NOT invent new milestones or new subtasks.
 
-Goal:
+====================
+GOAL
+====================
 {goal}
 
-Constraints:
+====================
+CONSTRAINTS
+====================
 - Hours per day: {constraints.get("hours_per_day")}
 - Skill level: {constraints.get("skill_level")}
 - Deadline: {constraints.get("deadline")}
 
-Milestones (fixed structure):
+====================
+MILESTONES (FIXED)
+====================
 {milestones}
 
-Current progress per milestone (0–100%):
+====================
+EXECUTION STATUS
+====================
+Progress percentages per milestone:
 {progress}
 
-Your task:
-1. For each milestone, give in-depth explanation what it is all about and how important it is to success . Then suggest concrete next actions appropriate to its progress level.
-2. Do NOT repeat completed work; focus on what moves progress forward.
-3. Adjust workload based on limited time and skill level.
-4. Recommend resources only where useful.
-5. Ensure the plan remains realistic for the deadline.
-6. If a milestone is 100% complete, acknowledge it briefly and move on.
-7. If progress is low and the deadline is near, warn the student and suggest prioritization.
+Completed and pending subtasks per milestone:
+{subtasks}
 
+====================
+YOUR TASK
+====================
+For EACH milestone:
 
-Return the response structured clearly by milestone.
-Avoid generic advice.
+1. Briefly explain what this milestone is and why it matters.
+2. Acknowledge completed subtasks succinctly.
+3. Focus primarily on pending subtasks and explain:
+   - What should be done next
+   - Why these actions matter now
+4. Adjust workload based on:
+   - Time available per day
+   - Skill level
+   - Proximity to the deadline
+5. If a milestone is complete (100%), acknowledge it briefly and move on.
+6. If progress is low and the deadline is near, issue a clear warning and suggest prioritisation.
+7. Recommend learning resources ONLY when they directly help pending subtasks.
 
+====================
+RESPONSE FORMAT
+====================
+- Use clear headings for each milestone
+- Be concrete and execution-focused
+- Avoid generic study advice
+- Do NOT restate subtasks verbatim unless explaining next actions
 
-
+The plan must remain realistic, adaptive, and grounded in the execution data provided.
 """
 
     response = client.models.generate_content(
@@ -58,4 +92,3 @@ Avoid generic advice.
     )
 
     return response.text
-
