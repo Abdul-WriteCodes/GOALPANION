@@ -150,7 +150,8 @@ if st.session_state.plan_generated:
         "⬇️ Download Original Plan (DOCX)",
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        type="primary"
     )
 
     # ------------------------------
@@ -235,7 +236,8 @@ if st.session_state.adapted:
         "⬇️ Download Adaptive Plan (DOCX)",
         data=adaptive_docx,
         file_name=f"{st.session_state.goal_id}_adaptive_plan.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+        type="primary"
     )
 
 
