@@ -4,8 +4,8 @@
 ---
 
 ## Description
-**ACHIEVIT** is an AI-driven, adaptive academic planning system designed to help **students and researchers structure, track, and achieve their goals**.  
-It supports academic tasks such as studying for exams, completing assignments, or writing dissertations while taking into account **real-world constraints** like time availability, skill level, and deadlines.  
+**ACHIEVIT** is an AI-driven, adaptive planning system designed to help **students and researchers structure, track, and achieve their resolution goals**.  
+It supports academic tasks such as studying for exams, completing assignments, or writing dissertations/thesis while taking into account **real-world constraints** like time availability, skill level, and deadlines.  
 
 By combining **heuristic milestone logic** with **LLM reasoning**, ACHIEVIT provides **adaptive, context-aware guidance** that evolves as users make progress on their goals. The system breaks goals into actionable milestones, tracks completion, and dynamically adjusts plans to maximize success.
 
@@ -36,33 +36,22 @@ ACHIEVIT uses a layered, human-in-the-loop architecture:
 
 ---
 
-### Key Features
+### Key Features and How it Works
 
 #### 🎯 Goal-Oriented Planning
 - Supports multiple academic goal types:  
   - **Exams**  
   - **Assignments**  
   - **Dissertations / Theses**  
-- Converts high-level goals into **clear, actionable milestones**  
-- Plans account for user constraints to ensure feasibility  
-
-#### ⏱️ Constraint-Aware Planning
-- Explicitly accounts for:  
-  - Daily hours available  
-  - Skill level (Novice / Intermediate / Expert)  
-  - Fixed deadlines  
-- Produces **realistic and achievable plans**  
-
-#### 🔁 Progress-Aware Adaptation
-- Track progress through interactive sliders:  
-  - *Not started* → 0%  
-  - *In progress* → 1–99%  
-  - *Completed* → 100%  
-- LLM dynamically:  
-  - Updates remaining steps  
-  - Adjusts schedules  
-  - Recommends optimization strategies  
-  - Suggests relevant resources  
+- Accept high-level goals and transform them into **clear, actionable four milestones and 5 substacks**  taking into account:
+	- Daily hours the user can commit to the goal
+	- Skill level (Novice / Intermediate / Expert) of the user in completing the goal
+	- Fixed deadlines  under which the goal is to be achieved
+- Produces **realistic and achievable plans with guidance on what to do based on four milestones and five different sub-tasks per milestone**  
+- Track and optimizes plans based on user progress on goal milestones and sub-tasks
+- Produces adaptive and context-aware plans based on user progress on milestone and sub-tasks 
+- Analyse behavioural risks and alerts users on implication on deadlines
+- Suggests strategies and relevant academic resources to achieve the goal
 
 #### 🧑‍🤝‍🧑 Human-in-the-Loop UI
 - Built with **Streamlit** for interactive planning  
@@ -71,7 +60,7 @@ ACHIEVIT uses a layered, human-in-the-loop architecture:
   - Goal definition  
   - Progress updates  
   - Plan adaptation  
-
+  
 ---
 
 ## Target Users
