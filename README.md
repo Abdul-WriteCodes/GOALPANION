@@ -101,8 +101,8 @@ For each goal, the system:
 
 ---
 ##🚀 Local Installation & Setup
-Follow the steps below to clone and run ACHIEVIT locally on your machine.
 
+Follow the steps below to clone and run ACHIEVIT locally on your machine.
 - Clone the Repository
 	- git clone https://github.com/abdul-writecodes/ACHIEVIT.git
 	- cd achievit
@@ -127,8 +127,10 @@ OPIK is optional but recommended for tracing, evaluation, and observability.
 	- streamlit run app.py
 - Open your browser at:
 	- http://localhost:8501
-	
+
+---
 ##🛠 Troubleshooting
+
 Gemini API free tier limit exceeded or server overloaded
 The free-tier Gemini model has request limits and reduced reasoning capacity. If the limit is exceeded or the server is overloaded, the app will prompt you to try again later or switch to a billed model.
 
@@ -136,7 +138,6 @@ The free-tier Gemini model has request limits and reduced reasoning capacity. If
 	- Re-run pip install -r requirements.txt
 - Secrets not found
 	- Ensure .streamlit/secrets.toml exists and is correctly formatted
-
 
 
 
