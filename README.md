@@ -1,81 +1,157 @@
-# ACHIEVIT
+# ACHIEVIT  
 **An LLM-Powered Academic Companion for Goal Achievement**
 
 ---
 
 ## Description
-**ACHIEVIT** is an AI-driven, adaptive planning system designed to help **students and researchers structure, track, and achieve their resolution goals**.  
-It supports academic tasks such as studying for exams, completing assignments, or writing dissertations/thesis while taking into account **real-world constraints** like time availability, skill level, and deadlines.  
 
-By combining **heuristic milestone logic** with **LLM reasoning**, ACHIEVIT provides **adaptive, context-aware guidance** that evolves as users make progress on their goals. The system breaks goals into actionable milestones, tracks completion, and dynamically adjusts plans to maximize success.
+**ACHIEVIT** is an AI-driven, adaptive planning system designed to help **students and researchers structure, execute, and complete academic goals**.
+
+It supports tasks such as preparing for exams, completing assignments, and writing dissertations or theses, while explicitly accounting for **real-world constraints** such as:
+
+- Available study time  
+- Skill level  
+- Fixed deadlines  
+
+By combining **deterministic heuristic planning** with **LLM-based reasoning**, ACHIEVIT produces **structured, realistic, and adaptive plans** that evolve as users make progress. Goals are broken into stable milestones and executable subtasks, progress is tracked transparently, and plans are dynamically adapted to maximize the likelihood of completion.
 
 <p align="center">
-  <img src="assets/Achievit.jpg" alt="Achievit Logo" style="width:100%; max-width:800px;" />
+  <img src="assets/Achievit.jpg" alt="Achievit Logo" width="800"/>
 </p>
 
+---
 
 ## Architecture & Key Features
 
 ### Hybrid Intelligence Architecture
-ACHIEVIT uses a layered, human-in-the-loop architecture:
+
+ACHIEVIT follows a **layered, human-in-the-loop architecture** that combines rule-based structure with LLM intelligence.
 
 <p align="center">
-  <img src="assets/Achievitecture.png" alt="Achievitecture" style="width:100%; max-width:800px;" />
+  <img src="assets/Achievitecture.png" alt="Achievitecture Diagram" width="800"/>
 </p>
 
-- **Heuristic Logic Layer**  
-  - Generates deterministic milestones from high-level goals  
-  - Handles constraints such as time, skill level, and deadlines  
+### 1. Heuristic Logic Layer
+- Detects goal type (Exam, Assignment, Dissertation / Thesis)
+- Generates **deterministic and auditable milestones**
+- Produces structured, milestone-specific subtasks
+- Incorporates constraints:
+  - Daily hours available
+  - Skill level (Novice / Intermediate / Expert)
+  - Deadline proximity
 
-- **LLM Reasoning Layer (Gemini)**  
-  - Produces adaptive and context-aware plans  
-  - Optimizes schedules based on progress  
-  - Suggests strategies and relevant academic resources  
+### 2. LLM Reasoning Layer (Gemini)
+- Interprets execution data and progress signals
+- Produces **context-aware, adaptive guidance**
+- Re-prioritizes effort as deadlines approach
+- Issues warnings when progress lags behind schedule
+- Suggests targeted learning resources only when relevant
 
-> This hybrid layering ensures plans are **structured, feasible, and intelligent**.
+> This hybrid approach ensures plans remain **stable, feasible, and intelligent**, avoiding hallucinated structure while still benefiting from LLM reasoning.
 
 ---
 
-### Key Features and How it Works
+## Key Features & How It Works
 
-#### 🎯 Goal-Oriented Planning
-- Supports multiple academic goal types:  
-  - **Exams**  
-  - **Assignments**  
-  - **Dissertations / Theses**  
-- Accept high-level goals and transform them into **clear, actionable four milestones and 5 substacks**  taking into account:
-	- Daily hours the user can commit to the goal
-	- Skill level (Novice / Intermediate / Expert) of the user in completing the goal
-	- Fixed deadlines  under which the goal is to be achieved
-- Produces **realistic and achievable plans with guidance on what to do based on four milestones and five different sub-tasks per milestone**  
-- Track and optimizes plans based on user progress on goal milestones and sub-tasks
-- Produces adaptive and context-aware plans based on user progress on milestone and sub-tasks 
-- Analyse behavioural risks and alerts users on implication on deadlines
-- Suggests strategies and relevant academic resources to achieve the goal
+### 🎯 Goal-Oriented Planning
 
-#### 🧑‍🤝‍🧑 Human-in-the-Loop UI
-- Built with **Streamlit** for interactive planning  
-- Sidebar for goal input and constraints  
-- Users remain in control of:  
-  - Goal definition  
-  - Progress updates  
-  - Plan adaptation  
-  
+ACHIEVIT supports multiple academic goal types:
+
+- **Exams**
+- **Assignments**
+- **Dissertations / Theses**
+
+For each goal, the system:
+
+- Accepts a high-level user goal
+- Generates **four fixed milestones**
+- Assigns **five executable subtasks per milestone**
+- Factors in:
+  - Daily time commitment
+  - User skill level
+  - Fixed deadlines
+- Produces **realistic, milestone-based execution plans**
+- Tracks completion at the **subtask level**
+- Dynamically adapts plans based on actual user progress
+- Analyses deadline risk and alerts users when they fall behind
+- Recommends strategies and academic resources aligned with pending work
+
+---
+
+### 🧑‍🤝‍🧑 Human-in-the-Loop Interface
+
+- Built with **Streamlit** for fast, interactive iteration
+- Sidebar-driven goal and constraint input
+- Two-column execution layout:
+  - Milestone and subtask execution (checkbox matrix)
+  - Plan overview, progress, and downloads
+- Users remain in full control of:
+  - Goal definition
+  - Progress updates
+  - Plan adaptation decisions
+
 ---
 
 ## Target Users
+
 - Undergraduate and postgraduate students  
 - Graduate researchers and PhD candidates  
 - Self-directed learners with academic goals  
-- Developers exploring **LLM agent systems with observability**
+- Developers exploring **LLM agent systems, hybrid planning, and observability**
+
+---
+##🚀 Local Installation & Setup
+Follow the steps below to clone and run ACHIEVIT locally on your machine.
+
+- Clone the Repository
+	- git clone https://github.com/abdul-writecodes/ACHIEVIT.git
+	- cd achievit
+- Create and Activate a Virtual Environment (Recommended)
+- Windows
+	- python -m venv venv
+	- venv\Scripts\activate
+- macOS / Linux
+	- python3 -m venv venv
+	- source venv/bin/activate
+-	Install Dependencies
+	- pip install -r requirements.txt
+	- Configure Environment Variables
+- Create a .streamlit/secrets.toml file in the project root:
+	- GEMINI_API_KEY = "your_gemini_api_key_here"
+	- OPIK_API_KEY = "your_opik_api_key_here"  # optional
+
+Gemini API key can be obtained from Google AI Studio.
+OPIK is optional but recommended for tracing, evaluation, and observability.
+
+- Run the Application
+	- streamlit run app.py
+- Open your browser at:
+	- http://localhost:8501
+	
+##🛠 Troubleshooting
+Gemini API free tier limit exceeded or server overloaded
+The free-tier Gemini model has request limits and reduced reasoning capacity. If the limit is exceeded or the server is overloaded, the app will prompt you to try again later or switch to a billed model.
+
+- Missing dependencies
+	- Re-run pip install -r requirements.txt
+- Secrets not found
+	- Ensure .streamlit/secrets.toml exists and is correctly formatted
+
+
+
 
 ---
 
-## Why ACHIEVIT?
-- Combines **LLM reasoning + heuristic logic** for smarter planning  
-- Supports **adaptive, milestone-driven execution**  
-- Handles **real-world constraints** for feasible plans  
-- Offers **downloadable plans (DOCX)** for offline use  
-- Provides **progress tracking and adaptive updates** for ongoing goal achievement  
+## Disclaimer
+
+ACHIEVIT does not collect or store personal data.  
+All planning and progress tracking occur within the application session.
 
 ---
+
+## Developer
+
+**Abdul Write & Codes**  
+🔬 Portfolio: https://abdul-writecodes.github.io/portfolio/  
+
+© 2026
