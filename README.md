@@ -91,13 +91,16 @@ For each goal, the system:
   - Plan adaptation decisions
 
 ---
+## 🔗 Live System
+
+👉 **[Try the Live Demo Here](https://achievit.streamlit.app/)**
+
 
 ## Target Users
 
 - Undergraduate and postgraduate students  
 - Graduate researchers and PhD candidates  
 - Self-directed learners with academic goals  
-- Developers exploring **LLM agent systems, hybrid planning, and observability**
 
 ---
 ## Local Installation & Setup
@@ -117,8 +120,8 @@ Follow the steps below to clone and run ACHIEVIT locally on your machine.
 	- pip install -r requirements.txt
 	- Configure Environment Variables
 - Create a .streamlit/secrets.toml file in the project root:
-	- GEMINI_API_KEY = "your_gemini_api_key_here"
-	- OPIK_API_KEY = "your_opik_api_key_here"  # optional
+	- GEMINI_API_KEY = "input_your_gemini_api_key_here"
+	- OPIK_API_KEY = "input_your_opik_api_key_here"  # optional
 
 Gemini API key can be obtained from Google AI Studio.
 OPIK is optional but recommended for tracing, evaluation, and observability.
