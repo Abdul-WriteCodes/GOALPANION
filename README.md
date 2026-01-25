@@ -1,5 +1,5 @@
 # ACHIEVIT  
-**An LLM-Powered Academic Companion for Goal Achievement**
+**An LLM-Powered System for Planning, Executing, Tracking,  and Achieving Goal Resolution**
 
 ---
 
@@ -47,7 +47,7 @@ ACHIEVIT follows a **layered, human-in-the-loop architecture** that combines rul
 - Issues warnings when progress lags behind schedule
 - Suggests targeted learning resources only when relevant
 
-> This hybrid approach ensures plans remain **stable, feasible, and intelligent**, avoiding hallucinated structure while still benefiting from LLM reasoning.
+This hybrid approach ensures plans remain **stable, feasible, and intelligent**, avoiding hallucinated structure while still benefiting from LLM reasoning.
 
 ---
 
@@ -82,9 +82,9 @@ For each goal, the system:
 
 - Built with **Streamlit** for fast, interactive iteration
 - Sidebar-driven goal and constraint input
-- Two-column execution layout:
+- Single column execution layout:
   - Milestone and subtask execution (checkbox matrix)
-  - Plan overview, progress, and downloads
+  - Plan overview, progress, and downloads of plans as docx
 - Users remain in full control of:
   - Goal definition
   - Progress updates

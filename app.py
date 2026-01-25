@@ -117,7 +117,7 @@ with st.sidebar.expander("Constraints", expanded=True):
 st.markdown("### Hello 👋!")
 st.markdown("""
 <p style='font-size:14px; color:#2ECC71;'>
-I’m your AI-powered academic planning companion, here to help you finish whatever goal you start<br>
+Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start<br>
 To get started, follow these steps in the side bar:<br>
 🎯 Select a goal type<br>
 📝 Describe your goal<br>
@@ -176,11 +176,11 @@ if st.button("🚀 Generate Plan", type="primary"):
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
-    st.subheader("📘 Your Original Plan")
+    st.subheader("📘 Here is the Road Map Plan Towards your Goal Achievement")
     st.write(st.session_state.detailed_plan_original)
 
     st.markdown("---")
-    st.subheader("💾 Download Original Plan")
+    st.subheader("💾 Download Plan")
 
     original_docx = plan_to_docx(
         title="ACHIEVIT – Original Plan",
@@ -190,7 +190,7 @@ if st.session_state.plan_generated:
     )
 
     st.download_button(
-        "⬇️ Download Original Plan (DOCX)",
+        "⬇️ Download  Plan (DOCX)",
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -331,7 +331,6 @@ st.markdown(
     <div style="text-align: center; font-size: 0.85em; color: gray;">
         <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
         🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
-        ☕ <a href="https://www.buymeacoffee.com/abdul_writecodes" target="_blank">Support</a><br>
         <strong>Disclaimer:</strong> No personal data collected.<br>
         © 2025 Abdul Write & Codes.
     </div>

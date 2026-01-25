@@ -63,7 +63,7 @@ YOUR TASK
 ====================
 For EACH milestone:
 
-1. Briefly explain what this milestone is and why it matters.
+1. Concisely explain what this milestone is and why it relates to the GOAL and matters for achieving the goal.
 2. Acknowledge completed subtasks succinctly.
 3. Focus primarily on pending subtasks and explain:
    - What should be done next
