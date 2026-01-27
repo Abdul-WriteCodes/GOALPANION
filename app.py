@@ -173,7 +173,7 @@ if st.button("🚀 Generate Plan", type="primary"):
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
-    st.subheader("📘 Road Map Plan: Here is a four milestone-based approach to achieve your goal")
+    st.subheader("📘 Road Map Plan: Here is a four milestone-based approach to achie")
     st.write(st.session_state.detailed_plan_original)
 
     st.markdown("---")
