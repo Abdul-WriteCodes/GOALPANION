@@ -132,7 +132,7 @@ st.markdown(
 # ------------------------------
 # Generate Plan
 # ------------------------------
-if st.button("🚀 Generate Plan", type="primary"):
+if st.button("🚀 Get Advice and Generate Plan", type="primary"):
     errors = validate_goal_input(goal_input, hours_per_day, deadline)
 
     if errors:
@@ -186,7 +186,7 @@ if st.button("🚀 Generate Plan", type="primary"):
         "show_execution": False,
     })
 
-    st.success("✅ Plan generated successfully!")
+    st.success("✅ Analysis completed successfully!")
 
 
 # ------------------------------
@@ -194,21 +194,21 @@ if st.button("🚀 Generate Plan", type="primary"):
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
-    st.subheader("📘 Road Map Plan")
+    st.subheader("📘 Here is the Road Map  towards your Achieving your Goals ")
     st.write(st.session_state.detailed_plan_original)
 
     st.markdown("---")
-    st.subheader("💾 Download Plan")
+    st.subheader("💾 Download Roadmap Plan")
 
     original_docx = plan_to_docx(
-        title="ACHIEVIT – Original Plan",
+        title="ACHIEVIT – Roadmap Plan",
         goal=st.session_state.goal,
         constraints=st.session_state.constraints,
         plan_text=st.session_state.detailed_plan_original,
     )
 
     st.download_button(
-        "⬇️ Download Plan (DOCX)",
+        "⬇️ Download Roadmap Plan (DOCX)",
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -221,10 +221,10 @@ if st.session_state.plan_generated:
 # ------------------------------
 if st.session_state.plan_generated and not st.session_state.show_execution:
     st.markdown("---")
-    st.subheader("🧠 Ready to Execute?")
+    st.subheader("🧠 Ready to Execute and Achieve your Goals?")
     st.caption("Reveal actionable subtasks and begin execution.")
 
-    if st.button("▶️ Show Execution Subtasks"):
+    if st.button("▶️ Generate Planned Tasks and Activities"):
         st.session_state.show_execution = True
         st.rerun()
 
@@ -234,7 +234,7 @@ if st.session_state.plan_generated and not st.session_state.show_execution:
 # ------------------------------
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
-    st.subheader("✅ Execute Your Plan")
+    st.subheader("✅  Execute Your Plan")
 
     updated_progress = {}
 
@@ -287,8 +287,8 @@ if st.session_state.plan_generated and st.session_state.show_execution:
 # Adapt Plan
 # ------------------------------
 st.markdown("---")
-if st.session_state.plan_generated and st.button("🔄 Adapt Plan Based on My Progress"):
-    with st.spinner("Thinking through your goal and constraints..."):
+if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
+    with st.spinner("Re-evaluating your progress against goal and constraints..."):
         adapted_plan = generate_detailed_plan(
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
@@ -300,8 +300,8 @@ if st.session_state.plan_generated and st.button("🔄 Adapt Plan Based on My Pr
     st.session_state.detailed_plan = adapted_plan
     st.session_state.adapted = True
 
-    st.success("Plan adapted successfully.")
-    st.subheader("🔁 Updated Adaptive Plan")
+    st.success("Evaluation successful.")
+    st.subheader("🔁 Here is what your progress means....")
     st.write(st.session_state.detailed_plan)
 
 
