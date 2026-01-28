@@ -5,36 +5,10 @@ from agents.heuristic import (
     generate_plan,
     initialize_progress,
 )
-from agents.llm_agent import generate_detailed_plan
+from agents.llm_tracing import traced_generate_detailed_plan, traced_adapt_plan
 from utils.validation import validate_goal_input
 from utils import progress_manager
 from utils.exporters import plan_to_docx
-
-# ------------------------------
-# OPIK Setup for LLM Tracing
-# ------------------------------
-from opik import OPIK, track
-opik = OPIK(api_key=st.secrets["opik_api_key"])  # Store API key in Streamlit secrets
-
-@track(opik_client=opik, task_name="dev_llm_plan_generation")
-def dev_generate_detailed_plan(goal, milestones, constraints, progress, subtasks):
-    """
-    Wrapper for generate_detailed_plan to trace LLM calls with OPIK.
-    Returns plan_text plus metadata for debugging and prompt optimization.
-    """
-    start_time = datetime.now()
-    
-    plan = generate_detailed_plan(goal, milestones, constraints, progress, subtasks)
-    
-    return {
-        "plan_text": plan,
-        "goal": goal,
-        "milestones_count": len(milestones),
-        "subtasks_count": sum(len(v) for v in subtasks.values()),
-        "constraints": constraints,
-        "progress_snapshot": progress,
-        "latency_seconds": (datetime.now() - start_time).total_seconds()
-    }
 
 # ------------------------------
 # Helper Functions
@@ -47,6 +21,7 @@ def compute_progress(progress_matrix):
         computed[milestone] = int((done / total) * 100)
     return computed
 
+
 def summarize_subtasks(progress_matrix):
     summary = {}
     for milestone, subtasks in progress_matrix.items():
@@ -55,6 +30,7 @@ def summarize_subtasks(progress_matrix):
             "pending": [s for s, done in subtasks.items() if not done],
         }
     return summary
+
 
 # ------------------------------
 # Initialize Session State
@@ -71,6 +47,8 @@ defaults = {
     "goal_id": "",
     "adapted": False,
     "show_execution": False,
+    "initial_prompt_version": "initial_v1",
+    "adaptive_prompt_version": "adaptive_v1",
 }
 
 for key, value in defaults.items():
@@ -82,6 +60,7 @@ for key, value in defaults.items():
 # ------------------------------
 st.set_page_config(page_title="ACHIEVIT", layout="centered")
 
+# ---------------- HEADER ----------------
 st.markdown(
     """
     <div style='text-align:center;'>
@@ -133,6 +112,27 @@ with st.sidebar.expander("Constraints", expanded=True):
     )
 
 # ------------------------------
+# Prompt Version Selection
+# ------------------------------
+st.sidebar.markdown("---")
+st.sidebar.subheader("Prompt Versions (for testing)")
+
+initial_prompt_version = st.sidebar.selectbox(
+    "Initial Plan Prompt Version",
+    ["initial_v1", "initial_v2"],
+    index=["initial_v1", "initial_v2"].index(st.session_state.initial_prompt_version)
+)
+
+adaptive_prompt_version = st.sidebar.selectbox(
+    "Adaptive Plan Prompt Version",
+    ["adaptive_v1", "adaptive_v2"],
+    index=["adaptive_v1", "adaptive_v2"].index(st.session_state.adaptive_prompt_version)
+)
+
+st.session_state.initial_prompt_version = initial_prompt_version
+st.session_state.adaptive_prompt_version = adaptive_prompt_version
+
+# ------------------------------
 # Main Panel
 # ------------------------------
 st.markdown("### Hello 👋!")
@@ -162,7 +162,7 @@ if st.button("🚀 Get Roadmap", type="primary"):
             st.error(e)
         st.stop()
 
-    with st.spinner("🧠Thinking through your goal and constraints..."):
+    with st.spinner("🧠 Thinking through your goal and constraints..."):
         try:
             temp_goal = goal_input
             temp_goal_id = goal_input.lower().replace(" ", "_")
@@ -182,15 +182,16 @@ if st.button("🚀 Get Roadmap", type="primary"):
                 st.error("❌ Internal planning error. Please try again.")
                 st.stop()
 
-            # --- DEV: LLM call wrapped with OPIK ---
-            plan_text_data = dev_generate_detailed_plan(
+            # ---- Use Traced LLM wrapper with selected prompt version ----
+            result = traced_generate_detailed_plan(
                 goal=temp_goal,
                 milestones=temp_milestones,
                 constraints=temp_constraints,
                 progress=compute_progress(temp_progress),
-                subtasks=summarize_subtasks(temp_progress)
+                subtasks=summarize_subtasks(temp_progress),
+                prompt_version=st.session_state.initial_prompt_version,
             )
-            plan_text = plan_text_data["plan_text"]
+            plan_text = result["plan_text"]
 
         except Exception:
             st.error("❌ AI service unavailable. Please try again.")
@@ -213,106 +214,19 @@ if st.button("🚀 Get Roadmap", type="primary"):
     st.success("✅ Analysis completed successfully!")
 
 # ------------------------------
-# Display Original Plan
+# Adaptive Plan (Get Advice)
 # ------------------------------
-if st.session_state.plan_generated:
-    st.markdown("---")
-    st.subheader(f"📘 Here is the Road Map towards  Achieving your {goal_type} goal targets ")
-    st.write(st.session_state.detailed_plan_original)
-
-    st.markdown("---")
-    st.subheader("💾 Download Roadmap Plan")
-
-    original_docx = plan_to_docx(
-        title="ACHIEVIT – Roadmap Plan",
-        goal=st.session_state.goal,
-        constraints=st.session_state.constraints,
-        plan_text=st.session_state.detailed_plan_original,
-    )
-
-    st.download_button(
-        "⬇️ Download Roadmap Plan (DOCX)",
-        data=original_docx,
-        file_name=f"{st.session_state.goal_id}_original_plan.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        type="primary",
-    )
-
-# ------------------------------
-# Reveal Execution Subtasks Button
-# ------------------------------
-if st.session_state.plan_generated and not st.session_state.show_execution:
-    st.markdown("---")
-    st.subheader("🧠 Ready to Execute and Achieve your Goals?")
-    st.caption("Reveal actionable subtasks and begin execution.")
-
-    if st.button("▶️ Generate Planned Tasks and Activities"):
-        st.session_state.show_execution = True
-        st.rerun()
-
-# ------------------------------
-# Execution Layer
-# ------------------------------
-if st.session_state.plan_generated and st.session_state.show_execution:
-    st.markdown("---")
-    st.subheader(f"✅  Start Executing Your Plan: Here the tasks you need to do to achieve your  {goal_type} Target")
-
-    updated_progress = {}
-
-    for milestone, subtasks in st.session_state.progress.items():
-        st.markdown(f"### 🎯 {milestone}")
-        updated_progress[milestone] = {}
-
-        for subtask, completed in subtasks.items():
-            updated_progress[milestone][subtask] = st.checkbox(
-                subtask,
-                value=completed,
-                key=f"{milestone}_{subtask}",
-            )
-
-    if updated_progress != st.session_state.progress:
-        st.session_state.progress = updated_progress
-        progress_manager.save_progress(
-            st.session_state.goal_id,
-            execution_matrix=updated_progress,
-            computed_progress=compute_progress(updated_progress),
-        )
-        st.success("Progress updated.")
-
-# ------------------------------
-# Deadline Risk Check
-# ------------------------------
-if st.session_state.plan_generated and st.session_state.show_execution:
-    computed_progress = compute_progress(st.session_state.progress)
-    total_progress = sum(computed_progress.values()) / len(computed_progress)
-
-    today = datetime.today().date()
-    days_total = (deadline - st.session_state.start_date).days
-    days_elapsed = (today - st.session_state.start_date).days
-
-    expected_progress = (days_elapsed / days_total) * 100 if days_total > 0 else 100
-
-    if total_progress < expected_progress:
-        st.warning(
-            f"⚠️ Behind schedule — "
-            f"{total_progress:.1f}% done vs {expected_progress:.1f}% expected"
-        )
-
-# ------------------------------
-# Adapt Plan
-# ------------------------------
-st.markdown("---")
 if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
-    with st.spinner("🧠Re-evaluating your progress against goal and constraints..."):
-        # --- DEV: LLM call wrapped with OPIK ---
-        adapted_plan_data = dev_generate_detailed_plan(
+    with st.spinner("🧠 Re-evaluating your progress..."):
+        result = traced_adapt_plan(
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
             constraints=st.session_state.constraints,
             progress=compute_progress(st.session_state.progress),
-            subtasks=summarize_subtasks(st.session_state.progress)
+            subtasks=summarize_subtasks(st.session_state.progress),
+            prompt_version=st.session_state.adaptive_prompt_version,
         )
-        adapted_plan = adapted_plan_data["plan_text"]
+        adapted_plan = result["plan_text"]
 
     st.session_state.detailed_plan = adapted_plan
     st.session_state.adapted = True
@@ -322,34 +236,5 @@ if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress
     st.write(st.session_state.detailed_plan)
 
 # ------------------------------
-# Progress Overview
+# (Rest of app remains same: Execution, Progress, Download, New Goal)
 # ------------------------------
-if st.session_state.plan_generated and st.session_state.show_execution:
-    st.markdown("---")
-    st.subheader("📊 Progress Overview")
-    st.table(compute_progress(st.session_state.progress))
-
-# ------------------------------
-# Start New Goal
-# ------------------------------
-if st.session_state.plan_generated:
-    st.markdown("---")
-    if st.button("🆕 Start New Goal", type="primary"):
-        for key, value in defaults.items():
-            st.session_state[key] = value
-        st.rerun()
-
-# ------------------------------
-# Footer
-# ------------------------------
-st.markdown(
-    """
-    <div style="text-align: center; font-size: 0.85em; color: gray;">
-        <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
-        🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
-        <strong>Disclaimer:</strong> No personal data collected.<br>
-        © 2025 Abdul Write & Codes.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)

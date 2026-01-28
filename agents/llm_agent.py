@@ -4,10 +4,23 @@ import streamlit as st
 from google import genai
 from google.genai import errors
 
+from opik import track
+from opik.integrations.genai import track_genai
+
+
+# ------------------------------
+# Gemini Client (wrapped by OPIK)
+# ------------------------------
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-client = genai.Client(api_key=GEMINI_API_KEY)
+
+_base_client = genai.Client(api_key=GEMINI_API_KEY)
+client = track_genai(_base_client)   # ✅ THIS enables tracing
 
 
+# ------------------------------
+# LLM Plan Generator (TRACED)
+# ------------------------------
+@track(task_name="llm_generate_detailed_plan")
 def generate_detailed_plan(
     goal: str,
     milestones: list[str],
@@ -63,28 +76,21 @@ YOUR TASK
 ====================
 For EACH milestone:
 
-1. Comprehensively explain what this milestone is, why it relates to the GOAL and matters for achieving the goal.
+1. Comprehensively explain what this milestone is and why it matters.
 2. Acknowledge completed subtasks succinctly.
-3. Focus primarily on pending subtasks and explain:
-   - What should be done next which must align with the each of the subtasks
-   - Why these actions matter now
-4. Adjust workload based on:
-   - Time available per day
-   - Skill level
-   - Proximity to the deadline
-5. If a milestone is complete (100%), acknowledge it briefly and move on.
-6. If progress is low and the deadline is near, issue a clear warning and suggest prioritisation.
-7. Recommend learning resources ONLY when they directly help pending subtasks.
+3. Focus on pending subtasks:
+   - What should be done next
+   - Why it matters now
+4. Adjust workload based on time, skill, and deadline.
+5. If progress is low and deadline is near, warn clearly.
+6. Recommend resources ONLY if directly helpful.
 
 ====================
 RESPONSE FORMAT
 ====================
-- Use clear headings for each milestone
-- Be concrete and execution-focused
-- Avoid generic study advice
-- Do NOT restate subtasks verbatim unless explaining next actions
-
-The plan must remain realistic, adaptive, and grounded in the execution data provided.
+- Clear headings per milestone
+- Execution-focused
+- No generic advice
 """
 
     try:
@@ -92,25 +98,19 @@ The plan must remain realistic, adaptive, and grounded in the execution data pro
             model="gemini-3-flash-preview",
             contents=prompt,
         )
-
         return response.text
 
     except errors.ServerError:
-        # Free-tier quota exceeded OR model/server overloaded
         st.warning(
-            "⚠️ Gemini API free-tier limit may be exceeded or the server is overloaded.\n\n"
+            "⚠️ Gemini API limit may be exceeded or the server is overloaded.\n"
             "Please wait a few minutes and try again."
         )
         return (
-            "⚠️ Unable to generate a plan right now due to temporary AI service limits. "
-            "Please try again later."
+            "⚠️ Unable to generate a plan right now due to temporary AI limits."
         )
 
     except errors.APIError:
-        st.error(
-            "❌ An unexpected error occurred while contacting the AI service."
-        )
+        st.error("❌ An unexpected error occurred while contacting the AI service.")
         return (
-            "❌ An unexpected error occurred while generating your plan. "
-            "Please try again."
+            "❌ An unexpected error occurred while generating your plan."
         )
