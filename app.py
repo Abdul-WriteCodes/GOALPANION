@@ -124,7 +124,7 @@ st.markdown(
     🎯 <strong>Select a goal type</strong><br>
     📝 <strong>Describe your goal</strong><br>
     ⏱️ <strong>State your constraints</strong><br>
-    👇 Click <strong>'Generate Roadmap'</strong><br>
+    👇 Click <strong>'Get Roadmap'</strong><br>
     🕹️ Take control from there!
     </p>
     """,
