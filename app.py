@@ -118,21 +118,24 @@ with st.sidebar.expander("Constraints", expanded=True):
 st.markdown("### Hello 👋!")
 st.markdown(
     """
-    <p style='font-size:14px; color:#2ECC71;'>
-    Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start<br>
-    🎯 Select a goal type<br>
-    📝 Describe your goal<br>
-    ⏱️ State your constraints<br>
-    👇 Click 'Generate Plan'
+    <p style='font-size:14px; color:#2ECC71; line-height:1.5;'>
+    Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start.<br>
+    Use the Sidebar to get started:
+    🎯 <strong>Select a goal type</strong><br>
+    📝 <strong>Describe your goal</strong><br>
+    ⏱️ <strong>State your constraints</strong><br><br>
+    👇 Click <strong>'Generate Roadmap'</em><br>
+    🕹️ Take control from there!
     </p>
     """,
     unsafe_allow_html=True
 )
 
+
 # ------------------------------
 # Generate Plan
 # ------------------------------
-if st.button("🚀 Get Advice and Generate Plan", type="primary"):
+if st.button("🚀 Get Roadmap", type="primary"):
     errors = validate_goal_input(goal_input, hours_per_day, deadline)
 
     if errors:
@@ -140,7 +143,7 @@ if st.button("🚀 Get Advice and Generate Plan", type="primary"):
             st.error(e)
         st.stop()
 
-    with st.spinner("Thinking through your goal and constraints..."):
+    with st.spinner("🧠Thinking through your goal and constraints..."):
         try:
             temp_goal = goal_input
             temp_goal_id = goal_input.lower().replace(" ", "_")
@@ -194,7 +197,7 @@ if st.button("🚀 Get Advice and Generate Plan", type="primary"):
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
-    st.subheader("📘 Here is the Road Map  towards your Achieving your Goals ")
+    st.subheader(f"📘 Here is the Road Map towards  Achieving your {goal_type} goal targets ")
     st.write(st.session_state.detailed_plan_original)
 
     st.markdown("---")
@@ -234,7 +237,7 @@ if st.session_state.plan_generated and not st.session_state.show_execution:
 # ------------------------------
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
-    st.subheader(f"✅  Start Executing Your Plan: Here the tasks you need to do to achieve your  {goal_type} ")
+    st.subheader(f"✅  Start Executing Your Plan: Here the tasks you need to do to achieve your  {goal_type} Target")
 
     updated_progress = {}
 
@@ -279,16 +282,12 @@ if st.session_state.plan_generated and st.session_state.show_execution:
         )
 
 
-
-# ------------------------------
-# Adapt Plan
-# ------------------------------
 # ------------------------------
 # Adapt Plan
 # ------------------------------
 st.markdown("---")
 if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
-    with st.spinner("Re-evaluating your progress against goal and constraints..."):
+    with st.spinner("🧠Re-evaluating your progress against goal and constraints..."):
         adapted_plan = generate_detailed_plan(
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
@@ -306,7 +305,7 @@ if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress
 
 
 # ------------------------------
-# Progress Overview (FIXED)
+# Progress Overview
 # ------------------------------
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
@@ -322,3 +321,20 @@ if st.session_state.plan_generated:
         for key, value in defaults.items():
             st.session_state[key] = value
         st.rerun()
+
+
+
+# ------------------------------
+# Footer
+# ------------------------------
+st.markdown(
+    """
+    <div style="text-align: center; font-size: 0.85em; color: gray;">
+        <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
+        🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
+        <strong>Disclaimer:</strong> No personal data collected.<br>
+        © 2025 Abdul Write & Codes.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
