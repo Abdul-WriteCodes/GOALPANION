@@ -47,6 +47,7 @@ defaults = {
     "start_date": None,
     "goal_id": "",
     "adapted": False,
+    "show_execution": False,
 }
 
 for key, value in defaults.items():
@@ -73,11 +74,11 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-) 
+)
 st.markdown("---")
 
 # ------------------------------
-# Sidebar Inputs- Control Goal and constraints setting
+# Sidebar Inputs
 # ------------------------------
 st.sidebar.header("Goal Control Panel")
 
@@ -115,19 +116,21 @@ with st.sidebar.expander("Constraints", expanded=True):
 # Main Panel
 # ------------------------------
 st.markdown("### Hello 👋!")
-st.markdown("""
-<p style='font-size:14px; color:#2ECC71;'>
-Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start<br>
-To get started, follow these steps in the side bar:<br>
-🎯 Select a goal type<br>
-📝 Describe your goal<br>
-⏱️ State your constraints<br>
-👇 Click 'Generate Plan' here
-</p>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <p style='font-size:14px; color:#2ECC71;'>
+    Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start<br>
+    🎯 Select a goal type<br>
+    📝 Describe your goal<br>
+    ⏱️ State your constraints<br>
+    👇 Click 'Generate Plan'
+    </p>
+    """,
+    unsafe_allow_html=True
+)
 
 # ------------------------------
-# Generate Plan (ATOMIC & SAFE)
+# Generate Plan
 # ------------------------------
 if st.button("🚀 Generate Plan", type="primary"):
     errors = validate_goal_input(goal_input, hours_per_day, deadline)
@@ -139,7 +142,6 @@ if st.button("🚀 Generate Plan", type="primary"):
 
     with st.spinner("Thinking through your goal and constraints..."):
         try:
-            # TEMPORARY STATE (NOT COMMITTED)
             temp_goal = goal_input
             temp_goal_id = goal_input.lower().replace(" ", "_")
 
@@ -152,19 +154,12 @@ if st.button("🚀 Generate Plan", type="primary"):
             temp_start_date = datetime.today().date()
 
             temp_milestones = generate_plan(temp_goal, temp_constraints)
-            temp_progress = initialize_progress(
-                temp_milestones,
-                temp_goal,
-            )
+            temp_progress = initialize_progress(temp_milestones, temp_goal)
 
-            # OPTIONAL: defensive structure check
-            if len(temp_milestones) != 4 or any(
-                len(v) != 5 for v in temp_progress.values()
-            ):
+            if len(temp_milestones) != 4 or any(len(v) != 5 for v in temp_progress.values()):
                 st.error("❌ Internal planning error. Please try again.")
                 st.stop()
 
-            # LLM REASONING (VALIDATION GATE)
             plan_text = generate_detailed_plan(
                 goal=temp_goal,
                 milestones=temp_milestones,
@@ -174,29 +169,24 @@ if st.button("🚀 Generate Plan", type="primary"):
             )
 
         except Exception:
-            st.error(
-                "❌ AI service unavailable. "
-                "No plan was generated. Please try again."
-            )
+            st.error("❌ AI service unavailable. Please try again.")
             st.stop()
 
-    # ✅ ATOMIC COMMIT (ONLY AFTER LLM SUCCESS)
-    st.session_state.plan_generated = True
-    st.session_state.adapted = False
-
-    st.session_state.goal = temp_goal
-    st.session_state.goal_id = temp_goal_id
-    st.session_state.constraints = temp_constraints
-    st.session_state.start_date = temp_start_date
-
-    st.session_state.milestones = temp_milestones
-    st.session_state.progress = temp_progress
-
-    st.session_state.detailed_plan_original = plan_text
-    st.session_state.detailed_plan = plan_text
+    st.session_state.update({
+        "plan_generated": True,
+        "adapted": False,
+        "goal": temp_goal,
+        "goal_id": temp_goal_id,
+        "constraints": temp_constraints,
+        "start_date": temp_start_date,
+        "milestones": temp_milestones,
+        "progress": temp_progress,
+        "detailed_plan_original": plan_text,
+        "detailed_plan": plan_text,
+        "show_execution": False,
+    })
 
     st.success("✅ Plan generated successfully!")
-
 
 
 # ------------------------------
@@ -204,7 +194,7 @@ if st.button("🚀 Generate Plan", type="primary"):
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
-    st.subheader("📘 Here is the Road Map Plan Towards your Goal Achievement")
+    st.subheader("📘 Road Map Plan")
     st.write(st.session_state.detailed_plan_original)
 
     st.markdown("---")
@@ -218,7 +208,7 @@ if st.session_state.plan_generated:
     )
 
     st.download_button(
-        "⬇️ Download  Plan (DOCX)",
+        "⬇️ Download Plan (DOCX)",
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -227,12 +217,24 @@ if st.session_state.plan_generated:
 
 
 # ------------------------------
-# Execution Layer (CHECKBOX MATRIX)
+# Reveal Execution Subtasks Button
 # ------------------------------
-if st.session_state.plan_generated:
+if st.session_state.plan_generated and not st.session_state.show_execution:
+    st.markdown("---")
+    st.subheader("🧠 Ready to Execute?")
+    st.caption("Reveal actionable subtasks and begin execution.")
+
+    if st.button("▶️ Show Execution Subtasks"):
+        st.session_state.show_execution = True
+        st.rerun()
+
+
+# ------------------------------
+# Execution Layer
+# ------------------------------
+if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
     st.subheader("✅ Execute Your Plan")
-    st.caption("To achieve this goal, here are the subtasks you need to compelete. Check the box for every tasks you have completed and your progress will updates automatically.")
 
     updated_progress = {}
 
@@ -249,66 +251,55 @@ if st.session_state.plan_generated:
 
     if updated_progress != st.session_state.progress:
         st.session_state.progress = updated_progress
-
-       
         progress_manager.save_progress(
             st.session_state.goal_id,
             execution_matrix=updated_progress,
             computed_progress=compute_progress(updated_progress),
         )
-
-
-        st.success("Progress updated from completed subtasks.")
+        st.success("Progress updated.")
 
 
 # ------------------------------
-# Deadline Risk Check
+# Deadline Risk Check (FIXED)
 # ------------------------------
-if st.session_state.plan_generated:
+if st.session_state.plan_generated and st.session_state.show_execution:
     computed_progress = compute_progress(st.session_state.progress)
     total_progress = sum(computed_progress.values()) / len(computed_progress)
 
     today = datetime.today().date()
+    days_total = (deadline - st.session_state.start_date).days
+    days_elapsed = (today - st.session_state.start_date).days
 
-    if deadline > st.session_state.start_date:
-        days_total = (deadline - st.session_state.start_date).days
-        days_elapsed = (today - st.session_state.start_date).days
+    expected_progress = (days_elapsed / days_total) * 100 if days_total > 0 else 100
 
-        expected_progress = (
-            (days_elapsed / days_total) * 100 if days_total > 0 else 100
+    if total_progress < expected_progress:
+        st.warning(
+            f"⚠️ Behind schedule — "
+            f"{total_progress:.1f}% done vs {expected_progress:.1f}% expected"
         )
 
-        if total_progress < expected_progress:
-            st.warning(
-                f"⚠️ You are behind schedule! "
-                f"Current: {total_progress:.1f}% | "
-                f"Expected: {expected_progress:.1f}%"
-            )
+
+# ------------------------------
+# Progress Overview (FIXED)
+# ------------------------------
+if st.session_state.plan_generated and st.session_state.show_execution:
+    st.markdown("---")
+    st.subheader("📊 Progress Overview")
+    st.table(compute_progress(st.session_state.progress))
 
 
 # ------------------------------
 # Adapt Plan
 # ------------------------------
-# ------------------------------
-# Adapt Plan (SAFE)
-# ------------------------------
 st.markdown("---")
 if st.session_state.plan_generated and st.button("🔄 Adapt Plan Based on My Progress"):
-    with st.spinner("Re-evaluating your plan..."):
-        try:
-            adapted_plan = generate_detailed_plan(
-                goal=st.session_state.goal,
-                milestones=st.session_state.milestones,
-                constraints=st.session_state.constraints,
-                progress=compute_progress(st.session_state.progress),
-                subtasks=summarize_subtasks(st.session_state.progress),
-            )
-        except Exception:
-            st.error(
-                "❌ Unable to adapt plan due to AI service unavailability. "
-                "Your existing plan is unchanged."
-            )
-            st.stop()
+    adapted_plan = generate_detailed_plan(
+        goal=st.session_state.goal,
+        milestones=st.session_state.milestones,
+        constraints=st.session_state.constraints,
+        progress=compute_progress(st.session_state.progress),
+        subtasks=summarize_subtasks(st.session_state.progress),
+    )
 
     st.session_state.detailed_plan = adapted_plan
     st.session_state.adapted = True
@@ -316,39 +307,6 @@ if st.session_state.plan_generated and st.button("🔄 Adapt Plan Based on My Pr
     st.success("Plan adapted successfully.")
     st.subheader("🔁 Updated Adaptive Plan")
     st.write(st.session_state.detailed_plan)
-
-
-
-# ------------------------------
-# Download Adaptive Plan
-# ------------------------------
-if st.session_state.adapted:
-    st.markdown("---")
-    st.subheader("💾 Download Adaptive Plan")
-
-    adaptive_docx = plan_to_docx(
-        title="ACHIEVIT – Adaptive Plan",
-        goal=st.session_state.goal,
-        constraints=st.session_state.constraints,
-        plan_text=st.session_state.detailed_plan,
-    )
-
-    st.download_button(
-        "⬇️ Download Adaptive Plan (DOCX)",
-        data=adaptive_docx,
-        file_name=f"{st.session_state.goal_id}_adaptive_plan.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        type="primary",
-    )
-
-
-# ------------------------------
-# Progress Overview
-# ------------------------------
-if st.session_state.plan_generated:
-    st.markdown("---")
-    st.subheader("📊 Progress Overview")
-    st.table(compute_progress(st.session_state.progress))
 
 
 # ------------------------------
@@ -360,19 +318,3 @@ if st.session_state.plan_generated:
         for key, value in defaults.items():
             st.session_state[key] = value
         st.rerun()
-
-
-# ------------------------------
-# Footer
-# ------------------------------
-st.markdown(
-    """
-    <div style="text-align: center; font-size: 0.85em; color: gray;">
-        <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
-        🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
-        <strong>Disclaimer:</strong> No personal data collected.<br>
-        © 2025 Abdul Write & Codes.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
