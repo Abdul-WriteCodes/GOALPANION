@@ -31,6 +31,8 @@ ACHIEVIT follows a **layered, human-in-the-loop architecture** that combines rul
   <img src="assets/Achievitecture.png" alt="Achievitecture Diagram" width="800"/>
 </p>
 
+
+
 ### 1. Heuristic Logic Layer
 - Detects goal type (Exam, Assignment, Dissertation / Thesis)
 - Generates **deterministic and auditable milestones**
@@ -89,7 +91,6 @@ For each goal, the system:
   - Goal definition
   - Progress updates
   - Plan adaptation decisions
-
 ---
 ## 🔗 Live System
 
