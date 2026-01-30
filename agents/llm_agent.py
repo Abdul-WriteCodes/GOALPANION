@@ -7,20 +7,18 @@ from google.genai import errors
 from opik import track
 from opik.integrations.genai import track_genai
 
-
 # ------------------------------
 # Gemini Client (wrapped by OPIK)
 # ------------------------------
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
 _base_client = genai.Client(api_key=GEMINI_API_KEY)
-client = track_genai(_base_client)   # ✅ THIS enables tracing
-
+client = track_genai(_base_client)   # ✅ enables tracing
 
 # ------------------------------
 # LLM Plan Generator (TRACED)
 # ------------------------------
-@track(task_name="llm_generate_detailed_plan")
+@track  # ✅ fixed decorator
 def generate_detailed_plan(
     goal: str,
     milestones: list[str],

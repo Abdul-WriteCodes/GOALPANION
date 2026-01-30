@@ -95,8 +95,8 @@
             },
             "Study core topics and concepts": {
                 "Study key concepts and theories": false,
-                "Create concise notes or summaries": false,
-                "Work through guided examples": true,
+                "Create concise notes or summaries": true,
+                "Work through guided examples": false,
                 "Identify weak topics and revise": false,
                 "Validate understanding before proceeding": false
             },
@@ -121,6 +121,6 @@
             "Practice past questions and mock exams": 0,
             "Final revision and exam readiness": 0
         },
-        "last_updated": "2026-01-29T22:06:37.178230"
+        "last_updated": "2026-01-30T11:40:14.481744"
     }
 }

@@ -1,32 +1,13 @@
-# ------------------------------  
-# Step 1: OPIK Bootstrap  
-# ------------------------------
-import opik
-
-# Configure OPIK project BEFORE anything else
-opik.configure(
-    project_name="ACHIEVIT",
-    tags=["dev"],   
-)
-
-# ------------------------------  
-# Imports  
-# ------------------------------
 import streamlit as st
 from datetime import date, datetime
 
-from agents.heuristic import (
-    generate_plan,
-    initialize_progress,
-)
+from agents.heuristic import generate_plan, initialize_progress
 from agents.llm_agent import generate_detailed_plan
 from utils.validation import validate_goal_input
 from utils import progress_manager
 from utils.exporters import plan_to_docx
 
-# ------------------------------  
-# Helper Functions  
-# ------------------------------
+# ------------------------------ Helper Functions ------------------------------
 def compute_progress(progress_matrix):
     computed = {}
     for milestone, subtasks in progress_matrix.items():
@@ -45,21 +26,8 @@ def summarize_subtasks(progress_matrix):
         }
     return summary
 
-# ------------------------------  
-# Sanity Check Trace  
-# ------------------------------
-from opik import track
 
-@track(name="sanity_check")
-def opik_sanity():
-    return "OPIK is configured correctly"
-
-# Run the sanity check once
-opik_sanity()
-
-# ------------------------------  
-# Initialize Session State  
-# ------------------------------
+# ------------------------------ Initialize Session State ------------------------------
 defaults = {
     "plan_generated": False,
     "goal": "",
@@ -78,11 +46,11 @@ for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-# ------------------------------  
-# Page Setup  
-# ------------------------------
+
+# ------------------------------ Page Setup ------------------------------
 st.set_page_config(page_title="ACHIEVIT", layout="centered")
 
+# ---------------- HEADER ----------------
 st.markdown(
     """
     <div style='text-align:center;'>
@@ -99,9 +67,8 @@ st.markdown(
 )
 st.markdown("---")
 
-# ------------------------------  
-# Sidebar Inputs  
-# ------------------------------
+
+# ------------------------------ Sidebar Inputs ------------------------------
 st.sidebar.header("Goal Control Panel")
 
 goal_type = st.sidebar.selectbox(
@@ -133,9 +100,200 @@ with st.sidebar.expander("Constraints", expanded=True):
         min_value=date.today(),
     )
 
-# ------------------------------  
-# Minimal Main Panel  
-# ------------------------------
-st.markdown("### Hello 👋! ACHIEVIT is ready.")
 
-st.info("Step 1: OPIK bootstrap complete. A sanity trace has been sent to the ACHIEVIT project. Check your OPIK dashboard.")
+# ------------------------------ Main Panel Intro ------------------------------
+st.markdown("### Hello 👋!")
+st.markdown(
+    """
+    <p style='font-size:14px; color:#2ECC71; line-height:1.5;'>
+    Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start.<br><br>
+    Use the Sidebar to get started:<br>
+    🎯 <strong>Select a goal type</strong><br>
+    📝 <strong>Describe your goal</strong><br>
+    ⏱️ <strong>State your constraints</strong><br>
+    👇 Click <strong>'Get Roadmap'</strong><br>
+    🕹️ Take control from there!
+    </p>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ------------------------------ Generate Plan ------------------------------
+if st.button("🚀 Get Roadmap", type="primary"):
+    errors = validate_goal_input(goal_input, hours_per_day, deadline)
+    if errors:
+        for e in errors:
+            st.error(e)
+        st.stop()
+
+    with st.spinner("🧠Thinking through your goal and constraints..."):
+        try:
+            temp_goal = goal_input
+            temp_goal_id = goal_input.lower().replace(" ", "_")
+            temp_constraints = {
+                "hours_per_day": hours_per_day,
+                "skill_level": skill_level,
+                "deadline": str(deadline),
+            }
+            temp_start_date = datetime.today().date()
+
+            temp_milestones = generate_plan(temp_goal, temp_constraints)
+            temp_progress = initialize_progress(temp_milestones, temp_goal)
+
+            if len(temp_milestones) != 4 or any(len(v) != 5 for v in temp_progress.values()):
+                st.error("❌ Internal planning error. Please try again.")
+                st.stop()
+
+            plan_text = generate_detailed_plan(
+                goal=temp_goal,
+                milestones=temp_milestones,
+                constraints=temp_constraints,
+                progress=compute_progress(temp_progress),
+                subtasks=summarize_subtasks(temp_progress),
+            )
+
+        except Exception:
+            st.error("❌ AI service unavailable. Please try again.")
+            st.stop()
+
+    st.session_state.update({
+        "plan_generated": True,
+        "adapted": False,
+        "goal": temp_goal,
+        "goal_id": temp_goal_id,
+        "constraints": temp_constraints,
+        "start_date": temp_start_date,
+        "milestones": temp_milestones,
+        "progress": temp_progress,
+        "detailed_plan_original": plan_text,
+        "detailed_plan": plan_text,
+        "show_execution": False,
+    })
+
+    st.success("✅ Analysis completed successfully!")
+
+
+# ------------------------------ Display Original Plan ------------------------------
+if st.session_state.plan_generated:
+    st.markdown("---")
+    st.subheader(f"📘 Roadmap for your {goal_type} goal")
+    st.write(st.session_state.detailed_plan_original)
+
+    st.markdown("---")
+    st.subheader("💾 Download Roadmap Plan")
+
+    original_docx = plan_to_docx(
+        title="ACHIEVIT – Roadmap Plan",
+        goal=st.session_state.goal,
+        constraints=st.session_state.constraints,
+        plan_text=st.session_state.detailed_plan_original,
+    )
+
+    st.download_button(
+        "⬇️ Download Roadmap Plan (DOCX)",
+        data=original_docx,
+        file_name=f"{st.session_state.goal_id}_original_plan.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        type="primary",
+    )
+
+
+# ------------------------------ Reveal Execution Subtasks ------------------------------
+if st.session_state.plan_generated and not st.session_state.show_execution:
+    st.markdown("---")
+    st.subheader("🧠 Ready to Execute and Achieve your Goals?")
+    st.caption("Reveal actionable subtasks and begin execution.")
+
+    if st.button("▶️ Generate Planned Tasks and Activities"):
+        st.session_state.show_execution = True
+        st.rerun()
+
+
+# ------------------------------ Execution Layer ------------------------------
+if st.session_state.plan_generated and st.session_state.show_execution:
+    st.markdown("---")
+    st.subheader(f"✅ Execute Your Plan: Tasks for {goal_type} Target")
+
+    updated_progress = {}
+
+    for milestone, subtasks in st.session_state.progress.items():
+        st.markdown(f"### 🎯 {milestone}")
+        updated_progress[milestone] = {}
+
+        for subtask, completed in subtasks.items():
+            updated_progress[milestone][subtask] = st.checkbox(
+                subtask,
+                value=completed,
+                key=f"{milestone}_{subtask}",
+            )
+
+    if updated_progress != st.session_state.progress:
+        st.session_state.progress = updated_progress
+        progress_manager.save_progress(
+            st.session_state.goal_id,
+            execution_matrix=updated_progress,
+            computed_progress=compute_progress(updated_progress),
+        )
+        st.success("Progress updated.")
+
+
+# ------------------------------ Deadline Risk Check ------------------------------
+if st.session_state.plan_generated and st.session_state.show_execution:
+    computed_progress = compute_progress(st.session_state.progress)
+    total_progress = sum(computed_progress.values()) / len(computed_progress)
+
+    today = datetime.today().date()
+    days_total = (deadline - st.session_state.start_date).days
+    days_elapsed = (today - st.session_state.start_date).days
+
+    expected_progress = (days_elapsed / days_total) * 100 if days_total > 0 else 100
+
+    if total_progress < expected_progress:
+        st.warning(
+            f"⚠️ Behind schedule — "
+            f"{total_progress:.1f}% done vs {expected_progress:.1f}% expected"
+        )
+
+
+# ------------------------------ Adapt Plan ------------------------------
+st.markdown("---")
+if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
+    with st.spinner("🧠Re-evaluating your progress against goal and constraints..."):
+        adapted_plan = generate_detailed_plan(
+            goal=st.session_state.goal,
+            milestones=st.session_state.milestones,
+            constraints=st.session_state.constraints,
+            progress=compute_progress(st.session_state.progress),
+            subtasks=summarize_subtasks(st.session_state.progress),
+        )
+
+    st.session_state.detailed_plan = adapted_plan
+    st.session_state.adapted = True
+
+    st.success("Evaluation successful.")
+    st.subheader("🔁 Here is what your progress means....")
+    st.write(st.session_state.detailed_plan)
+
+
+# ------------------------------ Start New Goal ------------------------------
+if st.session_state.plan_generated:
+    st.markdown("---")
+    if st.button("🆕 Start New Goal", type="primary"):
+        for key, value in defaults.items():
+            st.session_state[key] = value
+        st.rerun()
+
+
+# ------------------------------ Footer ------------------------------
+st.markdown(
+    """
+    <div style="text-align: center; font-size: 0.85em; color: gray;">
+        <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
+        🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
+        <strong>Disclaimer:</strong> No personal data collected.<br>
+        © 2025 Abdul Write & Codes.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
