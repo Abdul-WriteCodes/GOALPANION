@@ -8,139 +8,71 @@ from agents.llm_agent import generate_detailed_plan
 from utils.validation import validate_goal_input
 from utils import progress_manager
 from utils.exporters import plan_to_docx
-from utils.prompt_manager import AVAILABLE_VERSIONS, DEFAULT_VERSION, get_prompt
+from utils.prompt_manager import AVAILABLE_VERSIONS, DEFAULT_VERSION
 
 # ------------------------------
-# Helper Functions
+# Helpers
 # ------------------------------
 def compute_progress(progress_matrix):
-    computed = {}
-    for milestone, subtasks in progress_matrix.items():
-        total = len(subtasks)
-        done = sum(subtasks.values())
-        computed[milestone] = int((done / total) * 100)
-    return computed
-
+    return {
+        m: int(sum(s.values()) / len(s) * 100)
+        for m, s in progress_matrix.items()
+    }
 
 def summarize_subtasks(progress_matrix):
-    summary = {}
-    for milestone, subtasks in progress_matrix.items():
-        summary[milestone] = {
-            "completed": [s for s, done in subtasks.items() if done],
-            "pending": [s for s, done in subtasks.items() if not done],
+    return {
+        m: {
+            "completed": [s for s, d in tasks.items() if d],
+            "pending": [s for s, d in tasks.items() if not d],
         }
-    return summary
-
-
-# ------------------------------
-# Initialize Session State
-# ------------------------------
-defaults = {
-    "plan_generated": False,
-    "goal": "",
-    "constraints": {},
-    "milestones": [],
-    "progress": {},
-    "detailed_plan": "",
-    "detailed_plan_original": "",
-    "start_date": None,
-    "goal_id": "",
-    "adapted": False,
-    "show_execution": False,
-    "prompt_version": DEFAULT_VERSION,
-}
-
-for key, value in defaults.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
-
+        for m, tasks in progress_matrix.items()
+    }
 
 # ------------------------------
-# Page Setup
+# Session State
+# ------------------------------
+defaults = dict(
+    plan_generated=False,
+    goal="",
+    constraints={},
+    milestones=[],
+    progress={},
+    detailed_plan="",
+    detailed_plan_original="",
+    start_date=None,
+    goal_id="",
+    adapted=False,
+    show_execution=False,
+    prompt_version=DEFAULT_VERSION,
+)
+
+for k, v in defaults.items():
+    st.session_state.setdefault(k, v)
+
+# ------------------------------
+# UI Setup
 # ------------------------------
 st.set_page_config(page_title="ACHIEVIT", layout="centered")
 
-st.markdown(
-    """
-    <div style='text-align:center;'>
-        <h1>A C H I E V I T</h1>
-        <p style='font-size:16px; color:gray; font-weight:600'>
-            Hybrid AI agent system for students and researchers achieving goals
-        </p>
-        <p style='font-size:14px; color:#2ECC71; text-align:center; font-weight:600'>
-            🎯 Set Goals • 📝 Create Plans • 🔄 Execute & Adapt • ✅ Complete
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-st.markdown("---")
+st.title("A C H I E V I T")
+st.caption("Hybrid AI academic planning agent system")
 
+# Sidebar
+st.sidebar.header("Control Panel")
 
-# ------------------------------
-# Sidebar Inputs
-# ------------------------------
-st.sidebar.header("Goal Control Panel")
-
-# Prompt version selection
 st.sidebar.subheader("Prompt Version")
-prompt_version = st.sidebar.radio(
-    "Select the LLM Prompt Version to Use",
+st.session_state.prompt_version = st.sidebar.radio(
+    "Select Prompt Version",
     AVAILABLE_VERSIONS,
     index=AVAILABLE_VERSIONS.index(st.session_state.prompt_version),
 )
-st.session_state.prompt_version = prompt_version
 
-# Goal type
-goal_type = st.sidebar.selectbox(
-    "Select Goal Type",
-    ["Exam", "Assignment", "Dissertation / Thesis"],
-)
+goal_type = st.sidebar.selectbox("Goal Type", ["Exam", "Assignment", "Thesis"])
+goal_input = st.sidebar.text_area("Describe your goal", height=150)
 
-goal_input = st.sidebar.text_area(
-    f"Clearly explain your {goal_type} goal, give context and important details:",
-    height=160,
-)
-
-st.sidebar.markdown("---")
-st.sidebar.caption("Consider these constraints for your plan")
-
-with st.sidebar.expander("Constraints", expanded=True):
-    hours_per_day = st.number_input(
-        "Hours per day you can dedicate to this",
-        min_value=1,
-        max_value=24,
-        value=2,
-    )
-    skill_level = st.selectbox(
-        "Skill level",
-        ["Novice", "Intermediate", "Expert"],
-    )
-    deadline = st.date_input(
-        "Deadline / time frame",
-        min_value=date.today(),
-    )
-
-
-# ------------------------------
-# Main Panel Intro
-# ------------------------------
-st.markdown("### Hello 👋!")
-st.markdown(
-    """
-    <p style='font-size:14px; color:#2ECC71; line-height:1.5;'>
-    Achievit is an AI-powered system to guide you in achieving your goals.<br><br>
-    Use the Sidebar to get started:<br>
-    🎯 Select goal type<br>
-    📝 Describe your goal<br>
-    ⏱️ Set your constraints<br>
-    👇 Click <strong>'Get Roadmap'</strong><br>
-    🕹️ Take control from there!
-    </p>
-    """,
-    unsafe_allow_html=True
-)
-
+hours_per_day = st.sidebar.number_input("Hours per day", 1, 24, 2)
+skill_level = st.sidebar.selectbox("Skill level", ["Novice", "Intermediate", "Expert"])
+deadline = st.sidebar.date_input("Deadline", min_value=date.today())
 
 # ------------------------------
 # Generate Plan
@@ -152,146 +84,73 @@ if st.button("🚀 Get Roadmap", type="primary"):
             st.error(e)
         st.stop()
 
-    with st.spinner(f"🧠 Generating plan using Prompt Version {st.session_state.prompt_version}..."):
-        try:
-            temp_goal = goal_input
-            temp_goal_id = goal_input.lower().replace(" ", "_")
-            temp_constraints = {
-                "hours_per_day": hours_per_day,
-                "skill_level": skill_level,
-                "deadline": str(deadline),
-            }
-            temp_start_date = datetime.today().date()
+    with st.spinner("Generating roadmap..."):
+        temp_goal = goal_input
+        temp_goal_id = goal_input.lower().replace(" ", "_")
+        temp_constraints = dict(hours_per_day=hours_per_day, skill_level=skill_level, deadline=str(deadline))
+        temp_start_date = datetime.today().date()
 
-            temp_milestones = generate_plan(temp_goal, temp_constraints)
-            temp_progress = initialize_progress(temp_milestones, temp_goal)
+        milestones = generate_plan(temp_goal, temp_constraints)
+        progress = initialize_progress(milestones, temp_goal)
 
-            if len(temp_milestones) != 4 or any(len(v) != 5 for v in temp_progress.values()):
-                st.error("❌ Internal planning error. Please try again.")
-                st.stop()
+        result = generate_detailed_plan(
+            goal=temp_goal,
+            milestones=milestones,
+            constraints=temp_constraints,
+            progress=compute_progress(progress),
+            subtasks=summarize_subtasks(progress),
+            prompt_version=st.session_state.prompt_version,
+        )
 
-            plan_result = generate_detailed_plan(
-                goal=temp_goal,
-                milestones=temp_milestones,
-                constraints=temp_constraints,
-                progress=compute_progress(temp_progress),
-                subtasks=summarize_subtasks(temp_progress),
-                prompt_version=st.session_state.prompt_version,
-            )
+    st.session_state.update(
+        plan_generated=True,
+        goal=temp_goal,
+        goal_id=temp_goal_id,
+        constraints=temp_constraints,
+        start_date=temp_start_date,
+        milestones=milestones,
+        progress=progress,
+        detailed_plan_original=result["text"],
+        detailed_plan=result["text"],
+    )
 
-            plan_text = plan_result["text"]
-            used_version = plan_result["version"]
-
-        except Exception:
-            st.error("❌ AI service unavailable. Please try again.")
-            st.stop()
-
-    st.session_state.update({
-        "plan_generated": True,
-        "adapted": False,
-        "goal": temp_goal,
-        "goal_id": temp_goal_id,
-        "constraints": temp_constraints,
-        "start_date": temp_start_date,
-        "milestones": temp_milestones,
-        "progress": temp_progress,
-        "detailed_plan_original": plan_text,
-        "detailed_plan": plan_text,
-        "show_execution": False,
-    })
-
-    st.success(f"✅ Analysis completed successfully using Prompt Version: {used_version}")
-
+    st.success(f"Plan generated using {result['version']}")
 
 # ------------------------------
-# Display Original Plan
+# Display Plan
 # ------------------------------
 if st.session_state.plan_generated:
-    st.markdown("---")
-    st.subheader(f"📘 Roadmap for your {goal_type} goal")
+    st.markdown("## 📘 Roadmap")
     st.write(st.session_state.detailed_plan_original)
 
-    st.markdown("---")
-    st.subheader("💾 Download Roadmap Plan")
-    original_docx = plan_to_docx(
-        title="ACHIEVIT – Roadmap Plan",
-        goal=st.session_state.goal,
-        constraints=st.session_state.constraints,
-        plan_text=st.session_state.detailed_plan_original,
-    )
-    st.download_button(
-        "⬇️ Download Roadmap Plan (DOCX)",
-        data=original_docx,
-        file_name=f"{st.session_state.goal_id}_original_plan.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        type="primary",
-    )
-
-
-# ------------------------------
-# Reveal Execution Subtasks
-# ------------------------------
-if st.session_state.plan_generated and not st.session_state.show_execution:
-    st.markdown("---")
-    st.subheader("🧠 Ready to Execute Your Plan?")
-    st.caption("Reveal actionable subtasks and begin execution.")
-    if st.button("▶️ Generate Planned Tasks and Activities"):
-        st.session_state.show_execution = True
-        st.rerun()
-
+    docx = plan_to_docx("ACHIEVIT Plan", st.session_state.goal, st.session_state.constraints, st.session_state.detailed_plan_original)
+    st.download_button("Download DOCX", docx, file_name=f"{st.session_state.goal_id}.docx")
 
 # ------------------------------
 # Execution Layer
 # ------------------------------
-if st.session_state.plan_generated and st.session_state.show_execution:
-    st.markdown("---")
-    st.subheader(f"✅ Execute Tasks for {goal_type} Goal")
-    updated_progress = {}
+if st.session_state.plan_generated:
+    if st.button("▶ Start Execution"):
+        st.session_state.show_execution = True
 
-    for milestone, subtasks in st.session_state.progress.items():
-        st.markdown(f"### 🎯 {milestone}")
-        updated_progress[milestone] = {}
-        for subtask, completed in subtasks.items():
-            updated_progress[milestone][subtask] = st.checkbox(
-                subtask,
-                value=completed,
-                key=f"{milestone}_{subtask}",
-            )
+if st.session_state.show_execution:
+    st.markdown("## ✅ Execute Tasks")
 
-    if updated_progress != st.session_state.progress:
-        st.session_state.progress = updated_progress
-        progress_manager.save_progress(
-            st.session_state.goal_id,
-            execution_matrix=updated_progress,
-            computed_progress=compute_progress(updated_progress),
-        )
-        st.success("Progress updated.")
+    updated = {}
+    for m, tasks in st.session_state.progress.items():
+        st.subheader(m)
+        updated[m] = {t: st.checkbox(t, v, key=f"{m}_{t}") for t, v in tasks.items()}
 
-
-# ------------------------------
-# Deadline Risk Check
-# ------------------------------
-if st.session_state.plan_generated and st.session_state.show_execution:
-    computed_progress = compute_progress(st.session_state.progress)
-    total_progress = sum(computed_progress.values()) / len(computed_progress)
-    today = datetime.today().date()
-    days_total = (deadline - st.session_state.start_date).days
-    days_elapsed = (today - st.session_state.start_date).days
-    expected_progress = (days_elapsed / days_total) * 100 if days_total > 0 else 100
-
-    if total_progress < expected_progress:
-        st.warning(
-            f"⚠️ Behind schedule — {total_progress:.1f}% done vs {expected_progress:.1f}% expected"
-        )
-
+    if updated != st.session_state.progress:
+        st.session_state.progress = updated
+        progress_manager.save_progress(st.session_state.goal_id, updated, compute_progress(updated))
 
 # ------------------------------
 # Adapt Plan
 # ------------------------------
-st.markdown("---")
 if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
-    with st.spinner(f"🧠 Re-evaluating plan using Prompt Version {st.session_state.prompt_version}..."):
-        adapted_result = generate_detailed_plan(
+    with st.spinner("Adapting plan..."):
+        result = generate_detailed_plan(
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
             constraints=st.session_state.constraints,
@@ -300,35 +159,5 @@ if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress
             prompt_version=st.session_state.prompt_version,
         )
 
-    st.session_state.detailed_plan = adapted_result["text"]
-    st.session_state.adapted = True
-    st.success(f"Evaluation successful using Prompt Version: {adapted_result['version']}")
-    st.subheader("🔁 Here is what your progress means....")
-    st.write(st.session_state.detailed_plan)
-
-
-# ------------------------------
-# Start New Goal
-# ------------------------------
-if st.session_state.plan_generated:
-    st.markdown("---")
-    if st.button("🆕 Start New Goal", type="primary"):
-        for key, value in defaults.items():
-            st.session_state[key] = value
-        st.rerun()
-
-
-# ------------------------------
-# Footer
-# ------------------------------
-st.markdown(
-    """
-    <div style="text-align: center; font-size: 0.85em; color: gray;">
-        <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
-        🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
-        <strong>Disclaimer:</strong> No personal data collected.<br>
-        © 2025 Abdul Write & Codes.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    st.write(result["text"])
+    st.success(f"Updated using {result['version']}")
