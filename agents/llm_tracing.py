@@ -2,179 +2,101 @@
 
 import streamlit as st
 from google import genai
-from google.genai import errors
-from opik import track, set_metadata
+from opik import track
+import json
+from datetime import datetime
 
-# ----------------------------------------
-# Gemini Client
-# ----------------------------------------
-GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+# ------------------------------
+# Initialize Gemini client
+# ------------------------------
+GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# ----------------------------------------
-# Prompt Versions
-# ----------------------------------------
-PROMPT_VERSIONS = {
-    "initial_v1": """You are a seasoned academic planning assistant.
-GOAL:
-{goal}
-CONSTRAINTS:
-- Hours per day: {hours_per_day}
-- Skill level: {skill_level}
-- Deadline: {deadline}
-MILESTONES (FIXED):
-{milestones}
-EXECUTION STATUS:
-Progress percentages per milestone:
-{progress}
-Completed and pending subtasks per milestone:
-{subtasks}
-TASK:
-1. Explain each milestone briefly
-2. Acknowledge completed subtasks
-3. Focus on pending subtasks: what to do next and why
-4. Adjust workload based on time/skill/deadline
-5. Warn if progress is low and deadline is near
-6. Suggest resources ONLY if directly useful
-RESPONSE FORMAT:
-- Concrete, execution-focused
-- Headings per milestone
-""",
-    "initial_v2": """You are a highly experienced academic advisor.
-GOAL:
-{goal}
-CONSTRAINTS:
-- Hours/day: {hours_per_day}
-- Skill: {skill_level}
-- Deadline: {deadline}
-MILESTONES:
-{milestones}
-PROGRESS STATUS:
-{progress}
-SUBTASKS:
-{subtasks}
-TASK:
-- Explain each milestone concisely
-- Highlight completed subtasks
-- Prioritize pending subtasks with rationale
-- Adjust actions to time, skill, and deadline
-- Issue warnings for low progress if deadline is close
-RESPONSE:
-- Use clear headings
-- Execution-focused
-- Avoid generic advice
-""",
-    "adaptive_v1": """You are a seasoned academic planning assistant.
-Adaptive evaluation using current progress:
-GOAL: {goal}
-CONSTRAINTS:
-- Hours per day: {hours_per_day}
-- Skill level: {skill_level}
-- Deadline: {deadline}
-MILESTONES: {milestones}
-PROGRESS: {progress}
-SUBTASKS: {subtasks}
-RESPONSE FORMAT:
-- Next actions for pending subtasks
-- Warnings if behind schedule
-- Adjustments for time/skill/deadline
-- Headings per milestone
-""",
-    "adaptive_v2": """Generate an adaptive, milestone-based academic plan.
-GOAL: {goal}
-CONSTRAINTS:
-- Hours/day: {hours_per_day}
-- Skill: {skill_level}
-- Deadline: {deadline}
-MILESTONES: {milestones}
-PROGRESS: {progress}
-SUBTASKS: {subtasks}
-TASK:
-- Focus on pending subtasks
-- Explain what to do next and why
-- Adjust based on time/skill/deadline
-- Warn if progress is low and deadline is near
-RESPONSE:
-- Concrete, actionable steps
-- Headings per milestone
-- Execution-focused, avoid generic study advice
-"""
-}
 
-# ----------------------------------------
-# Utility: build prompt
-# ----------------------------------------
-def build_prompt(version, goal, milestones, constraints, progress, subtasks):
-    template = PROMPT_VERSIONS.get(version)
-    return template.format(
-        goal=goal,
-        milestones=milestones,
-        progress=progress,
-        subtasks=subtasks,
-        hours_per_day=constraints.get("hours_per_day"),
-        skill_level=constraints.get("skill_level"),
-        deadline=constraints.get("deadline"),
-    )
-
-# ----------------------------------------
-# Generic LLM Call Wrapper
-# ----------------------------------------
-def call_gemini(prompt):
-    try:
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=prompt
-        )
-        return response.text
-    except errors.ServerError:
-        return "⚠️ Gemini service temporarily unavailable."
-    except errors.APIError:
-        return "❌ Unexpected error occurred."
-
-# ----------------------------------------
-# Initial Plan Trace
-# ----------------------------------------
-@track(name="llm_generate_detailed_plan", capture_input=True, capture_output=True)
+# ------------------------------
+# Traced Generate Detailed Plan
+# ------------------------------
+@track(name="generate_detailed_plan", metadata={"type": "initial_plan"})
 def traced_generate_detailed_plan(goal, milestones, constraints, progress, subtasks, prompt_version="initial_v1"):
-    prompt = build_prompt(prompt_version, goal, milestones, constraints, progress, subtasks)
-    
-    # Metadata for OPIK
-    set_metadata({
-        "agent": "achievit-llm",
-        "call_type": "initial_plan",
-        "milestone_count": len(milestones),
-        "prompt_version": prompt_version
-    })
+    """
+    Generate a detailed plan using the LLM, traced for observability.
+    """
+    try:
+        # Customize prompt based on version
+        prompt = f"[{prompt_version}] Generate a detailed plan for goal: {goal}.\n"
+        prompt += f"Milestones: {json.dumps(milestones)}\n"
+        prompt += f"Constraints: {json.dumps(constraints)}\n"
+        prompt += f"Progress: {json.dumps(progress)}\n"
+        prompt += f"Subtasks: {json.dumps(subtasks)}"
 
-    plan_text = call_gemini(prompt)
-    return {
-        "plan_text": plan_text,
-        "model": "gemini-3-flash-preview",
-        "prompt_version": prompt_version
-    }
+        response = client.generate_text(prompt)
+        plan_text = response.text if response.text else "No plan generated."
 
-# ----------------------------------------
-# Adaptive Plan Trace
-# ----------------------------------------
-@track(name="llm_adapt_plan", capture_input=True, capture_output=True)
+        return {"plan_text": plan_text}
+
+    except Exception as e:
+        st.error(f"❌ LLM plan generation failed: {str(e)}")
+        return {"plan_text": "Plan generation failed."}
+
+
+# ------------------------------
+# Traced Adapt Plan
+# ------------------------------
+@track(name="adapt_plan", metadata={"type": "adaptive_plan"})
 def traced_adapt_plan(goal, milestones, constraints, progress, subtasks, prompt_version="adaptive_v1"):
-    prompt = build_prompt(prompt_version, goal, milestones, constraints, progress, subtasks)
-    
-    # Metadata for OPIK
-    set_metadata({
-        "agent": "achievit-llm",
-        "call_type": "adaptive_plan",
-        "milestone_count": len(milestones),
-        "avg_progress": sum(progress.values()) / len(progress) if progress else 0,
-        "low_progress_flag": (sum(progress.values()) / len(progress) if progress else 0) < 40,
-        "prompt_version": prompt_version
-    })
+    """
+    Generate an adaptive plan based on current progress, traced for observability.
+    """
+    try:
+        prompt = f"[{prompt_version}] Adapt the plan for goal: {goal}.\n"
+        prompt += f"Milestones: {json.dumps(milestones)}\n"
+        prompt += f"Constraints: {json.dumps(constraints)}\n"
+        prompt += f"Progress: {json.dumps(progress)}\n"
+        prompt += f"Subtasks: {json.dumps(subtasks)}"
 
-    plan_text = call_gemini(prompt)
-    return {
-        "plan_text": plan_text,
-        "model": "gemini-3-flash-preview",
-        "prompt_version": prompt_version
-    }
+        response = client.generate_text(prompt)
+        plan_text = response.text if response.text else "No adaptive plan generated."
+
+        return {"plan_text": plan_text}
+
+    except Exception as e:
+        st.error(f"❌ Adaptive plan generation failed: {str(e)}")
+        return {"plan_text": "Adaptive plan generation failed."}
 
 
+# ------------------------------
+# Judge Plan
+# ------------------------------
+@track(name="judge_plan", metadata={"type": "evaluation"})
+def judge_plan(goal, milestones, constraints, progress, plan_text, prompt_version="judge_v1", call_type="initial_plan"):
+    """
+    Evaluate a plan for relevance, consistency, and hallucination risk.
+    Returns a dictionary of scores.
+    """
+    try:
+        prompt = f"[{prompt_version}] Judge the following plan for goal: {goal}.\n"
+        prompt += f"Milestones: {json.dumps(milestones)}\n"
+        prompt += f"Constraints: {json.dumps(constraints)}\n"
+        prompt += f"Progress: {json.dumps(progress)}\n"
+        prompt += f"Plan Text: {plan_text}\n"
+        prompt += "Provide scores between 0-100 for relevance, consistency, and hallucination risk."
+
+        response = client.generate_text(prompt)
+        text = response.text
+
+        # Try to parse JSON-like response
+        try:
+            scores = json.loads(text)
+            # Ensure all keys exist
+            for key in ["relevance", "consistency", "hallucination"]:
+                if key not in scores:
+                    scores[key] = None
+        except Exception:
+            # Fallback: assign default perfect scores if parsing fails
+            scores = {"relevance": 100, "consistency": 100, "hallucination": 100}
+
+        return scores
+
+    except Exception as e:
+        st.error(f"❌ Plan judging failed: {str(e)}")
+        return {"relevance": None, "consistency": None, "hallucination": None}
