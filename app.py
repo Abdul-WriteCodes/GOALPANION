@@ -1,3 +1,5 @@
+# app.py
+
 import streamlit as st
 from datetime import date, datetime
 
@@ -6,8 +8,11 @@ from agents.llm_agent import generate_detailed_plan
 from utils.validation import validate_goal_input
 from utils import progress_manager
 from utils.exporters import plan_to_docx
+from utils.prompt_manager import AVAILABLE_VERSIONS, DEFAULT_VERSION, get_prompt
 
-# ------------------------------ Helper Functions ------------------------------
+# ------------------------------
+# Helper Functions
+# ------------------------------
 def compute_progress(progress_matrix):
     computed = {}
     for milestone, subtasks in progress_matrix.items():
@@ -27,7 +32,9 @@ def summarize_subtasks(progress_matrix):
     return summary
 
 
-# ------------------------------ Initialize Session State ------------------------------
+# ------------------------------
+# Initialize Session State
+# ------------------------------
 defaults = {
     "plan_generated": False,
     "goal": "",
@@ -40,6 +47,7 @@ defaults = {
     "goal_id": "",
     "adapted": False,
     "show_execution": False,
+    "prompt_version": DEFAULT_VERSION,
 }
 
 for key, value in defaults.items():
@@ -47,16 +55,17 @@ for key, value in defaults.items():
         st.session_state[key] = value
 
 
-# ------------------------------ Page Setup ------------------------------
+# ------------------------------
+# Page Setup
+# ------------------------------
 st.set_page_config(page_title="ACHIEVIT", layout="centered")
 
-# ---------------- HEADER ----------------
 st.markdown(
     """
     <div style='text-align:center;'>
         <h1>A C H I E V I T</h1>
         <p style='font-size:16px; color:gray; font-weight:600'>
-            A hybrid intelligent agent system for students and researchers in achieving their goals/resolutions
+            Hybrid AI agent system for students and researchers achieving goals
         </p>
         <p style='font-size:14px; color:#2ECC71; text-align:center; font-weight:600'>
             🎯 Set Goals • 📝 Create Plans • 🔄 Execute & Adapt • ✅ Complete
@@ -68,9 +77,21 @@ st.markdown(
 st.markdown("---")
 
 
-# ------------------------------ Sidebar Inputs ------------------------------
+# ------------------------------
+# Sidebar Inputs
+# ------------------------------
 st.sidebar.header("Goal Control Panel")
 
+# Prompt version selection
+st.sidebar.subheader("Prompt Version")
+prompt_version = st.sidebar.radio(
+    "Select the LLM Prompt Version to Use",
+    AVAILABLE_VERSIONS,
+    index=AVAILABLE_VERSIONS.index(st.session_state.prompt_version),
+)
+st.session_state.prompt_version = prompt_version
+
+# Goal type
 goal_type = st.sidebar.selectbox(
     "Select Goal Type",
     ["Exam", "Assignment", "Dissertation / Thesis"],
@@ -82,7 +103,7 @@ goal_input = st.sidebar.text_area(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Consider these constraints and indicate how they fit into your plan")
+st.sidebar.caption("Consider these constraints for your plan")
 
 with st.sidebar.expander("Constraints", expanded=True):
     hours_per_day = st.number_input(
@@ -96,21 +117,23 @@ with st.sidebar.expander("Constraints", expanded=True):
         ["Novice", "Intermediate", "Expert"],
     )
     deadline = st.date_input(
-        "What is your deadline or time frame for this",
+        "Deadline / time frame",
         min_value=date.today(),
     )
 
 
-# ------------------------------ Main Panel Intro ------------------------------
+# ------------------------------
+# Main Panel Intro
+# ------------------------------
 st.markdown("### Hello 👋!")
 st.markdown(
     """
     <p style='font-size:14px; color:#2ECC71; line-height:1.5;'>
-    Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start.<br><br>
+    Achievit is an AI-powered system to guide you in achieving your goals.<br><br>
     Use the Sidebar to get started:<br>
-    🎯 <strong>Select a goal type</strong><br>
-    📝 <strong>Describe your goal</strong><br>
-    ⏱️ <strong>State your constraints</strong><br>
+    🎯 Select goal type<br>
+    📝 Describe your goal<br>
+    ⏱️ Set your constraints<br>
     👇 Click <strong>'Get Roadmap'</strong><br>
     🕹️ Take control from there!
     </p>
@@ -119,7 +142,9 @@ st.markdown(
 )
 
 
-# ------------------------------ Generate Plan ------------------------------
+# ------------------------------
+# Generate Plan
+# ------------------------------
 if st.button("🚀 Get Roadmap", type="primary"):
     errors = validate_goal_input(goal_input, hours_per_day, deadline)
     if errors:
@@ -127,7 +152,7 @@ if st.button("🚀 Get Roadmap", type="primary"):
             st.error(e)
         st.stop()
 
-    with st.spinner("🧠Thinking through your goal and constraints..."):
+    with st.spinner(f"🧠 Generating plan using Prompt Version {st.session_state.prompt_version}..."):
         try:
             temp_goal = goal_input
             temp_goal_id = goal_input.lower().replace(" ", "_")
@@ -145,13 +170,17 @@ if st.button("🚀 Get Roadmap", type="primary"):
                 st.error("❌ Internal planning error. Please try again.")
                 st.stop()
 
-            plan_text = generate_detailed_plan(
+            plan_result = generate_detailed_plan(
                 goal=temp_goal,
                 milestones=temp_milestones,
                 constraints=temp_constraints,
                 progress=compute_progress(temp_progress),
                 subtasks=summarize_subtasks(temp_progress),
+                prompt_version=st.session_state.prompt_version,
             )
+
+            plan_text = plan_result["text"]
+            used_version = plan_result["version"]
 
         except Exception:
             st.error("❌ AI service unavailable. Please try again.")
@@ -171,10 +200,12 @@ if st.button("🚀 Get Roadmap", type="primary"):
         "show_execution": False,
     })
 
-    st.success("✅ Analysis completed successfully!")
+    st.success(f"✅ Analysis completed successfully using Prompt Version: {used_version}")
 
 
-# ------------------------------ Display Original Plan ------------------------------
+# ------------------------------
+# Display Original Plan
+# ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
     st.subheader(f"📘 Roadmap for your {goal_type} goal")
@@ -182,14 +213,12 @@ if st.session_state.plan_generated:
 
     st.markdown("---")
     st.subheader("💾 Download Roadmap Plan")
-
     original_docx = plan_to_docx(
         title="ACHIEVIT – Roadmap Plan",
         goal=st.session_state.goal,
         constraints=st.session_state.constraints,
         plan_text=st.session_state.detailed_plan_original,
     )
-
     st.download_button(
         "⬇️ Download Roadmap Plan (DOCX)",
         data=original_docx,
@@ -199,28 +228,29 @@ if st.session_state.plan_generated:
     )
 
 
-# ------------------------------ Reveal Execution Subtasks ------------------------------
+# ------------------------------
+# Reveal Execution Subtasks
+# ------------------------------
 if st.session_state.plan_generated and not st.session_state.show_execution:
     st.markdown("---")
-    st.subheader("🧠 Ready to Execute and Achieve your Goals?")
+    st.subheader("🧠 Ready to Execute Your Plan?")
     st.caption("Reveal actionable subtasks and begin execution.")
-
     if st.button("▶️ Generate Planned Tasks and Activities"):
         st.session_state.show_execution = True
         st.rerun()
 
 
-# ------------------------------ Execution Layer ------------------------------
+# ------------------------------
+# Execution Layer
+# ------------------------------
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
-    st.subheader(f"✅ Execute Your Plan: Tasks for {goal_type} Target")
-
+    st.subheader(f"✅ Execute Tasks for {goal_type} Goal")
     updated_progress = {}
 
     for milestone, subtasks in st.session_state.progress.items():
         st.markdown(f"### 🎯 {milestone}")
         updated_progress[milestone] = {}
-
         for subtask, completed in subtasks.items():
             updated_progress[milestone][subtask] = st.checkbox(
                 subtask,
@@ -238,45 +268,48 @@ if st.session_state.plan_generated and st.session_state.show_execution:
         st.success("Progress updated.")
 
 
-# ------------------------------ Deadline Risk Check ------------------------------
+# ------------------------------
+# Deadline Risk Check
+# ------------------------------
 if st.session_state.plan_generated and st.session_state.show_execution:
     computed_progress = compute_progress(st.session_state.progress)
     total_progress = sum(computed_progress.values()) / len(computed_progress)
-
     today = datetime.today().date()
     days_total = (deadline - st.session_state.start_date).days
     days_elapsed = (today - st.session_state.start_date).days
-
     expected_progress = (days_elapsed / days_total) * 100 if days_total > 0 else 100
 
     if total_progress < expected_progress:
         st.warning(
-            f"⚠️ Behind schedule — "
-            f"{total_progress:.1f}% done vs {expected_progress:.1f}% expected"
+            f"⚠️ Behind schedule — {total_progress:.1f}% done vs {expected_progress:.1f}% expected"
         )
 
 
-# ------------------------------ Adapt Plan ------------------------------
+# ------------------------------
+# Adapt Plan
+# ------------------------------
 st.markdown("---")
 if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
-    with st.spinner("🧠Re-evaluating your progress against goal and constraints..."):
-        adapted_plan = generate_detailed_plan(
+    with st.spinner(f"🧠 Re-evaluating plan using Prompt Version {st.session_state.prompt_version}..."):
+        adapted_result = generate_detailed_plan(
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
             constraints=st.session_state.constraints,
             progress=compute_progress(st.session_state.progress),
             subtasks=summarize_subtasks(st.session_state.progress),
+            prompt_version=st.session_state.prompt_version,
         )
 
-    st.session_state.detailed_plan = adapted_plan
+    st.session_state.detailed_plan = adapted_result["text"]
     st.session_state.adapted = True
-
-    st.success("Evaluation successful.")
+    st.success(f"Evaluation successful using Prompt Version: {adapted_result['version']}")
     st.subheader("🔁 Here is what your progress means....")
     st.write(st.session_state.detailed_plan)
 
 
-# ------------------------------ Start New Goal ------------------------------
+# ------------------------------
+# Start New Goal
+# ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
     if st.button("🆕 Start New Goal", type="primary"):
@@ -285,7 +318,9 @@ if st.session_state.plan_generated:
         st.rerun()
 
 
-# ------------------------------ Footer ------------------------------
+# ------------------------------
+# Footer
+# ------------------------------
 st.markdown(
     """
     <div style="text-align: center; font-size: 0.85em; color: gray;">

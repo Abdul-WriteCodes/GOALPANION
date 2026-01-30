@@ -6,6 +6,7 @@ from google.genai import errors
 
 from opik import track
 from opik.integrations.genai import track_genai
+from utils.prompt_manager import get_prompt
 
 # ------------------------------
 # Gemini Client (wrapped by OPIK)
@@ -18,97 +19,44 @@ client = track_genai(_base_client)   # ✅ enables tracing
 # ------------------------------
 # LLM Plan Generator (TRACED)
 # ------------------------------
-@track  # ✅ fixed decorator
+@track  # OPIK decorator
 def generate_detailed_plan(
     goal: str,
     milestones: list[str],
     constraints: dict,
     progress: dict,
     subtasks: dict,
+    prompt_version: str = None,
 ):
     """
-    Generate an adaptive, milestone-based academic plan.
-
-    progress: dict mapping milestone -> completion percentage (0–100)
-    subtasks: dict mapping milestone -> {
-        "completed": [subtasks],
-        "pending": [subtasks]
-    }
+    Generate milestone-based academic plan using selected prompt version.
+    Returns a dict with "text" and "version".
     """
+    prompt_text, used_version = get_prompt(prompt_version)
 
-    prompt = f"""
-You are a seasoned academic planning assistant.
-
-This system uses a FIXED heuristic structure.
-You MUST respect the given milestones and subtasks.
-Do NOT invent new milestones or new subtasks.
-
-====================
-GOAL
-====================
-{goal}
-
-====================
-CONSTRAINTS
-====================
-- Hours per day: {constraints.get("hours_per_day")}
-- Skill level: {constraints.get("skill_level")}
-- Deadline: {constraints.get("deadline")}
-
-====================
-MILESTONES (FIXED)
-====================
-{milestones}
-
-====================
-EXECUTION STATUS
-====================
-Progress percentages per milestone:
-{progress}
-
-Completed and pending subtasks per milestone:
-{subtasks}
-
-====================
-YOUR TASK
-====================
-For EACH milestone:
-
-1. Comprehensively explain what this milestone is and why it matters.
-2. Acknowledge completed subtasks succinctly.
-3. Focus on pending subtasks:
-   - What should be done next
-   - Why it matters now
-4. Adjust workload based on time, skill, and deadline.
-5. If progress is low and deadline is near, warn clearly.
-6. Recommend resources ONLY if directly helpful.
-
-====================
-RESPONSE FORMAT
-====================
-- Clear headings per milestone
-- Execution-focused
-- No generic advice
-"""
+    # Fill prompt placeholders
+    prompt_filled = prompt_text.format(
+        goal=goal,
+        milestones=milestones,
+        progress=progress,
+        subtasks=subtasks,
+        hours_per_day=constraints.get("hours_per_day"),
+        skill_level=constraints.get("skill_level"),
+        deadline=constraints.get("deadline"),
+        constraints=constraints,  # for v1.1 style prompts
+    )
 
     try:
         response = client.models.generate_content(
             model="gemini-3-flash-preview",
-            contents=prompt,
+            contents=prompt_filled,
         )
-        return response.text
+        return {"text": response.text, "version": used_version}
 
     except errors.ServerError:
-        st.warning(
-            "⚠️ Gemini API limit may be exceeded or the server is overloaded.\n"
-            "Please wait a few minutes and try again."
-        )
-        return (
-            "⚠️ Unable to generate a plan right now due to temporary AI limits."
-        )
+        st.warning("⚠️ Gemini API limit exceeded or server overloaded. Try again in a few minutes.")
+        return {"text": "⚠️ Unable to generate plan due to temporary AI limits.", "version": used_version}
 
     except errors.APIError:
-        st.error("❌ An unexpected error occurred while contacting the AI service.")
-        return (
-            "❌ An unexpected error occurred while generating your plan."
-        )
+        st.error("❌ Unexpected error contacting the AI service.")
+        return {"text": "❌ Unexpected AI service error.", "version": used_version}
