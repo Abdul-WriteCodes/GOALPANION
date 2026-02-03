@@ -332,6 +332,7 @@ st.markdown(
     <div style="text-align: center; font-size: 0.85em; color: gray;">
         <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
         🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
+        🔬 <a href="https://www.comet.com/opik/abdul-writecodes/projects/019c0e9e-6412-759b-ab54-a5238ff89bf7/traces?time_range=past30days&size=100&height=small&traces_filters=%5B%5D&trace=&span=&trace_panel_filters=%5B%5D&traceTab=feedback_scores&thread=&view=dashboards&dashboardId=template%3Aproject-performance" target="_blank">OPIK Observability</a><br>
         <strong>Disclaimer:</strong> No personal data collected.<br>
         © 2025 Abdul Write & Codes.
     </div>
