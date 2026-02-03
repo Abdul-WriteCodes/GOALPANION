@@ -80,20 +80,20 @@ st.markdown("---")
 # ------------------------------
 # Sidebar Inputs
 # ------------------------------
-st.sidebar.header("Goal Control Panel")
+st.sidebar.header("Goal Control Panel⚙️")
 
 goal_type = st.sidebar.selectbox(
-    "Select Goal Type",
+    "Select Goal Type 🎯",
     ["Exam", "Assignment", "Dissertation / Thesis"],
 )
 
 goal_input = st.sidebar.text_area(
-    f"Clearly explain your {goal_type} goal, give context and important details:",
+    f"Clearly explain your {goal_type} goal, give context and important details📝:",
     height=160,
 )
 
 st.sidebar.markdown("---")
-st.sidebar.caption("Consider these constraints and indicate how they fit into your plan")
+st.sidebar.caption("Consider these constraints and indicate how they fit into your plan⛔")
 
 with st.sidebar.expander("Constraints", expanded=True):
     hours_per_day = st.number_input(
