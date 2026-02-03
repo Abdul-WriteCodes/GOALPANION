@@ -230,8 +230,8 @@ Users have to mark any of the subtasks to have competed.
 """
 if st.session_state.plan_generated and not st.session_state.show_execution:
     st.markdown("---")
-    #st.subheader("🧠 Ready to Execute and Achieve your Goals?")
-    #st.caption("Reveal actionable subtasks and begin execution.")
+    st.subheader("🧠 Ready to Execute and Achieve your Goals?")
+    st.caption("Reveal actionable subtasks and begin execution.")
 
     if st.button("▶️ Generate Planned Tasks and Activities"):
         st.session_state.show_execution = True
