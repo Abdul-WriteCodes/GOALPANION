@@ -134,7 +134,7 @@ st.markdown(
 
 
 # Generate Plan
-'''
+_= '''
 System operation starts here based on validated inputs: Goal type, goal description and constraints
 
 '''
