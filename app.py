@@ -134,10 +134,10 @@ st.markdown(
 
 
 # Generate Plan
-"""
+'''
 System operation starts here based on validated inputs: Goal type, goal description and constraints
 
-"""
+'''
 if st.button("🚀 Get Roadmap", type="primary"):
     errors = validate_goal_input(goal_input, hours_per_day, deadline)
 
