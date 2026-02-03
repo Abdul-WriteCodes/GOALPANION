@@ -58,13 +58,13 @@ for key, value in defaults.items():
 # ------------------------------
 # Page Setup
 # ------------------------------
-st.set_page_config(page_title="ACHIEVIT", layout="centered")
+st.set_page_config(page_title="🖥️ACHIEVIT", layout="centered")
 
 # ---------------- HEADER ----------------
 st.markdown(
     """
     <div style='text-align:center;'>
-        <h1>A C H I E V I T</h1>
+        <h1>A C H I E V I T 🖥️</h1>
         <p style='font-size:16px; color:gray; font-weight:600'>
             A hybrid intelligent agent system for students and researchers in achieving their goals/resolutions
         </p>
@@ -119,7 +119,7 @@ st.markdown("### Hello 👋!")
 st.markdown(
     """
     <p style='font-size:14px; color:#2ECC71; line-height:1.5;'>
-    Achievit is an AI-powered intelligent system that will accompany you in finishing whatever goal you start.<br><br>
+    Achievit is an AI-powered intelligent system that will accompany you in planning and finishing whatever goal you start.<br><br>
     Use the Sidebar to get started:<br>
     🎯 <strong>Select a goal type</strong><br>
     📝 <strong>Describe your goal</strong><br>
@@ -132,9 +132,12 @@ st.markdown(
 )
 
 
-# ------------------------------
+
 # Generate Plan
-# ------------------------------
+"""
+System operation starts here based on validated inputs: Goal type, goal description and constraints
+
+"""
 if st.button("🚀 Get Roadmap", type="primary"):
     errors = validate_goal_input(goal_input, hours_per_day, deadline)
 
@@ -192,12 +195,14 @@ if st.button("🚀 Get Roadmap", type="primary"):
     st.success("✅ Analysis completed successfully!")
 
 
-# ------------------------------
-# Display Original Plan
-# ------------------------------
+# Display  Road Map Plan
+"""
+LLM agent presents clean and downloadable structured roadmap plan that users have to follow to ensure that the goal is achieved
+"""
+
 if st.session_state.plan_generated:
     st.markdown("---")
-    st.subheader(f"📘 Here is the Road Map towards  Achieving your {goal_type} goal targets ")
+    st.subheader(f"📄 Here is the Road Map towards  Achieving your {goal_type} goal targets ")
     st.write(st.session_state.detailed_plan_original)
 
     st.markdown("---")
@@ -211,7 +216,7 @@ if st.session_state.plan_generated:
     )
 
     st.download_button(
-        "⬇️ Download Roadmap Plan (DOCX)",
+        "⬇️ Download Roadmap Plan Here",
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -219,9 +224,13 @@ if st.session_state.plan_generated:
     )
 
 
-# ------------------------------
 # Reveal Execution Subtasks Button
-# ------------------------------
+"""
+Reveal the planned milestones and subtasks activities that users must execute.
+Four milestones are generated for users.
+Five substasks are generated per milestone.
+Users have to mark any of the subtasks to have competed.
+"""
 if st.session_state.plan_generated and not st.session_state.show_execution:
     st.markdown("---")
     st.subheader("🧠 Ready to Execute and Achieve your Goals?")
@@ -232,9 +241,12 @@ if st.session_state.plan_generated and not st.session_state.show_execution:
         st.rerun()
 
 
-# ------------------------------
-# Execution Layer
-# ------------------------------
+# Plan Execution Layer
+"""
+Active execution of each of the five subtasks per milestones. 
+Execution is in no particular order but progress is saved for the LLM agent (Gemini-3-flash) to work on them.
+
+"""
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
     st.subheader(f"✅  Start Executing Your Plan: Here the tasks you need to do to achieve your  {goal_type} Target")
@@ -262,9 +274,11 @@ if st.session_state.plan_generated and st.session_state.show_execution:
         st.success("Progress updated.")
 
 
-# ------------------------------
-# Deadline Risk Check (FIXED)
-# ------------------------------
+# Deadline Risk Check 
+"""
+Check and validate how user progress on milestone subtasks marked as completed takes them far away from achieving the goal against the deadline period
+"""
+
 if st.session_state.plan_generated and st.session_state.show_execution:
     computed_progress = compute_progress(st.session_state.progress)
     total_progress = sum(computed_progress.values()) / len(computed_progress)
@@ -282,12 +296,16 @@ if st.session_state.plan_generated and st.session_state.show_execution:
         )
 
 
-# ------------------------------
-# Adapt Plan
-# ------------------------------
+# Road Map Plan Adaptation
+"""
+Agent considers the progress level that users have made based on the sub-tasks that are completed.
+It provides users with an progress-state adapted roadmap on how to adjust and optimise tasks to ensure that the goal
+is achieved within the stated deadline"
+
+"""
 st.markdown("---")
 if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress"):
-    with st.spinner("🧠Re-evaluating your progress against goal and constraints..."):
+    with st.spinner("🧠Re-evaluating your progress against your planned goal and constraints..."):
         adapted_plan = generate_detailed_plan(
             goal=st.session_state.goal,
             milestones=st.session_state.milestones,
@@ -304,9 +322,12 @@ if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress
     st.write(st.session_state.detailed_plan)
 
 
-# ------------------------------
+
 # Progress Overview
-# ------------------------------
+"""
+User progress is computed, displayed and updated for every subtask marked as completed
+
+"""
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
     st.subheader("📊 Progress Overview")
@@ -314,6 +335,10 @@ if st.session_state.plan_generated and st.session_state.show_execution:
 
 # ------------------------------
 # Start New Goal
+
+"""
+System reset logic for users to enter a fresh goal
+"""
 # ------------------------------
 if st.session_state.plan_generated:
     st.markdown("---")
@@ -332,7 +357,7 @@ st.markdown(
     <div style="text-align: center; font-size: 0.85em; color: gray;">
         <strong>ACHIEVIT</strong> — 2026 Encode Commit To Change Hackathon<br>
         🔬 <a href="https://abdul-writecodes.github.io/portfolio/" target="_blank">Developer Portfolio</a><br>
-        🔬 <a href="https://www.comet.com/opik/abdul-writecodes/projects/019c0e9e-6412-759b-ab54-a5238ff89bf7/traces?time_range=past30days&size=100&height=small&traces_filters=%5B%5D&trace=&span=&trace_panel_filters=%5B%5D&traceTab=feedback_scores&thread=&view=dashboards&dashboardId=template%3Aproject-performance" target="_blank">OPIK Observability</a><br>
+        🖥️ <a href="https://www.comet.com/opik/abdul-writecodes/projects/019c0e9e-6412-759b-ab54-a5238ff89bf7/traces?time_range=past30days&size=100&height=small&traces_filters=%5B%5D&trace=&span=&trace_panel_filters=%5B%5D&traceTab=feedback_scores&thread=&view=dashboards&dashboardId=template%3Aproject-performance" target="_blank">OPIK Observability: View Dashboard</a><br>
         <strong>Disclaimer:</strong> No personal data collected.<br>
         © 2025 Abdul Write & Codes.
     </div>
