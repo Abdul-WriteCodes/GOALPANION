@@ -196,7 +196,7 @@ if st.button("🚀 Get Roadmap", type="primary"):
 
 
 # Display  Road Map Plan
-"""
+_= """
 LLM agent presents clean and downloadable structured roadmap plan that users have to follow to ensure that the goal is achieved
 """
 
@@ -225,7 +225,7 @@ if st.session_state.plan_generated:
 
 
 # Reveal Execution Subtasks Button
-"""
+_= """
 Reveal the planned milestones and subtasks activities that users must execute.
 Four milestones are generated for users.
 Five substasks are generated per milestone.
@@ -242,7 +242,7 @@ if st.session_state.plan_generated and not st.session_state.show_execution:
 
 
 # Plan Execution Layer
-"""
+_= """
 Active execution of each of the five subtasks per milestones. 
 Execution is in no particular order but progress is saved for the LLM agent (Gemini-3-flash) to work on them.
 
@@ -275,7 +275,7 @@ if st.session_state.plan_generated and st.session_state.show_execution:
 
 
 # Deadline Risk Check 
-"""
+_= """
 Check and validate how user progress on milestone subtasks marked as completed takes them far away from achieving the goal against the deadline period
 """
 
@@ -297,7 +297,7 @@ if st.session_state.plan_generated and st.session_state.show_execution:
 
 
 # Road Map Plan Adaptation
-"""
+_= """
 Agent considers the progress level that users have made based on the sub-tasks that are completed.
 It provides users with an progress-state adapted roadmap on how to adjust and optimise tasks to ensure that the goal
 is achieved within the stated deadline"
@@ -324,7 +324,7 @@ if st.session_state.plan_generated and st.button("🔄 Get Advice on My Progress
 
 
 # Progress Overview
-"""
+_= """
 User progress is computed, displayed and updated for every subtask marked as completed
 
 """
@@ -336,7 +336,7 @@ if st.session_state.plan_generated and st.session_state.show_execution:
 # ------------------------------
 # Start New Goal
 
-"""
+_= """
 System reset logic for users to enter a fresh goal
 """
 # ------------------------------
