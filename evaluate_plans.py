@@ -56,9 +56,9 @@ def evaluation_task(dataset_item):
 # 3. Metrics to evaluate (LLM-as-a-judge)
 # ------------------------------
 metrics = [
-    AnswerRelevance(),
+    #AnswerRelevance(),
     Hallucination(),
-    Moderation()
+    #Moderation()
 ]
 
 # ------------------------------
