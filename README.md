@@ -143,6 +143,7 @@ Using OPIK, Prompt-level experiments show that Prompt v2 reduces latency by 37% 
 | Change (+/-)    | −17.43%         | +129.41%       | 0.00%     | +20.12%   | +0.96%       | +312.50%   |
 
 
+> **Note:** For code related to observability and LLM-based evaluations, check the unmerged branch [`dev_opik_LLM`](https://github.com/Abdul-WriteCodes/ACHIEVIT/tree/dev_opik_llm).
 
 ---
 ## Local Installation & Setup
