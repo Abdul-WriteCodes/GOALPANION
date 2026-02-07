@@ -119,7 +119,18 @@ For each goal, the system:
 - Judge: OpenAI GPT-4
 - Metrics: AnswerRelevance, Hallucination, Moderation
 - Size of Dataset: 15
-- Basis of Evaluation: Prompt version 1 vs Prompt version 2
+- Basis of Evaluation: 
+	- Prompt version 1 vs Prompt version 2
+	- Gemini-3-flash-preview vs Gemini-3-pro-preview
+
+- Results 
+
+| Prompt       | Answer Relevance ↑ | Hallucination ↓ | Moderation | Latency ↓ | Total Tokens | Total Cost |
+|-------------|-----------------|----------------|-----------|-----------|--------------|------------|
+| Prompt v1   | 0.893           | 0.189          | 0.00      | 75.7s     | 9966.27      | $0.008     |
+| Prompt v2   | 0.894           | 0.191          | 0.00      | 47.4s     | 9417.733     | $0.007     |
+| Change (+/-)| +0.11%          | +1.06%         | 0.00%     | −37.38%   | −5.50%       | −12.50%    |
+
 
 
 
