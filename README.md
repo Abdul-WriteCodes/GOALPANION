@@ -123,7 +123,7 @@ For each goal, the system:
 	- Prompt version 1 vs Prompt version 2
 	- Gemini-3-flash-preview vs Gemini-3-pro-preview
 
-- Results: Prompt Optimisation
+- Results: Prompt Optimisation Average scores based on 15 iterations
 
 | Prompt       | Answer Relevance ↑ | Hallucination ↓ | Moderation | Latency ↓ | Total Tokens | Total Cost |
 |-------------|-----------------|----------------|-----------|-----------|--------------|------------|
@@ -134,7 +134,7 @@ For each goal, the system:
 
 Using OPIK, Prompt-level experiments show that Prompt v2 reduces latency by 37% and cost by 12.5%, while maintaining similar answer relevance and hallucination risk to Prompt v1, enabling an informed efficiency–quality trade-off for real-world deployment
 
-- Results: Model Optimisation
+- Results: Model Optimisation Average scores based on 15 iterations
 
 | Model           | Answer Relevance ↑ | Hallucination ↓ | Moderation | Latency ↓ | Total Tokens | Total Cost |
 |-----------------|-----------------|----------------|-----------|-----------|--------------|------------|
@@ -143,7 +143,7 @@ Using OPIK, Prompt-level experiments show that Prompt v2 reduces latency by 37% 
 | Change (+/-)    | −17.43%         | +129.41%       | 0.00%     | +20.12%   | +0.96%       | +312.50%   |
 
 
-> **Note:** For code related to observability and LLM-based evaluations, check the unmerged branch [`dev_opik_LLM`](https://github.com/Abdul-WriteCodes/ACHIEVIT/tree/dev_opik_llm).
+> **Note:** For code related to observability and LLM-based evaluations using OPIK, check the unmerged branch [`dev_opik_LLM`](https://github.com/Abdul-WriteCodes/ACHIEVIT/tree/dev_opik_llm).
 
 ---
 ## Local Installation & Setup
