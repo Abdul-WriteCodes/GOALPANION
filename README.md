@@ -132,7 +132,7 @@ For each goal, the system:
 | Change (+/-)| +0.11%          | +1.06%         | 0.00%     | −37.38%   | −5.50%       | −12.50%    |
 
 
-
+Using OPIK, Prompt-level experiments show that Prompt v2 reduces latency by 37% and cost by 12.5%, while maintaining similar answer relevance and hallucination risk to Prompt v1, enabling an informed efficiency–quality trade-off for real-world deployment
 
 
 
