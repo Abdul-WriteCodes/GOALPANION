@@ -56,16 +56,16 @@ def evaluation_task(dataset_item):
 # 3. Metrics to evaluate (LLM-as-a-judge)
 # ------------------------------
 metrics = [
-    #AnswerRelevance(),
+    AnswerRelevance(require_context=False),
     Hallucination(),
-    #Moderation()
+    Moderation()
 ]
 
 # ------------------------------
 # 4. Run evaluation
 # ------------------------------
 results = evaluate(
-    experiment_name="achievit_plan_quality_v1",
+    experiment_name="Gemini-3-pro",
     dataset=dataset,
     task=evaluation_task,
     scoring_metrics=metrics

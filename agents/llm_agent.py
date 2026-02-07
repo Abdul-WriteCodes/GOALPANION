@@ -23,7 +23,7 @@ def generate_detailed_plan(
     constraints,
     progress,
     subtasks,
-    prompt_version="v1.0",
+    prompt_version="v2.0",
 ):
     prompt_template = get_prompt(prompt_version)
 
@@ -37,7 +37,7 @@ def generate_detailed_plan(
 
     try:
         response = client.models.generate_content(
-            model="gemini-3-flash-preview",
+            model="gemini-3-pro-preview",
             contents=prompt,
         )
 
