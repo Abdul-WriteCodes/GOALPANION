@@ -116,7 +116,7 @@ st.markdown("### Hello 👋!")
 st.markdown(
     """
     <p style='font-size:14px; color:#2ECC71; line-height:1.5;'>
-    Achievit is an AI-powered intelligent system that will accompany you in planning and finishing whatever goal you start.<br><br>
+    Achievit is an AI-powered intelligent system that will accompany you in planning, executing and finishing whatever goal you start.<br><br>
     Use the Sidebar to get started:<br>
     🎯 <strong>Select a goal type</strong><br>
     📝 <strong>Describe your goal</strong><br>
@@ -189,7 +189,7 @@ if st.button("🚀 Get Roadmap", type="primary"):
         "show_execution": False,
     })
 
-    st.success("✅ Analysis completed successfully!")
+    st.success(f"✅ Analysis of your {goal_type} and constaint completed")
 
 
 # Display  Road Map Plan
@@ -213,7 +213,7 @@ if st.session_state.plan_generated:
     )
 
     st.download_button(
-        "⬇️ Download Roadmap Plan Here",
+        "⬇️ Download Roadmap Plan",
         data=original_docx,
         file_name=f"{st.session_state.goal_id}_original_plan.docx",
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -230,8 +230,8 @@ Users have to mark any of the subtasks to have competed.
 """
 if st.session_state.plan_generated and not st.session_state.show_execution:
     st.markdown("---")
-    st.subheader("🧠 Ready to Execute and Achieve your Goals?")
-    st.caption("Reveal actionable subtasks and begin execution.")
+    st.subheader("🧠 Ready to Execute Plan and Achieve your Goals?")
+    st.caption("Click to Reveal actionable subtasks and begin execution.")
 
     if st.button("▶️ Generate Planned Tasks and Activities"):
         st.session_state.show_execution = True
@@ -246,7 +246,7 @@ Execution is in no particular order but progress is saved for the LLM agent (Gem
 """
 if st.session_state.plan_generated and st.session_state.show_execution:
     st.markdown("---")
-    st.subheader(f"✅  Execution Started: Here are the tasks you need to do to achieve your  {goal_type} Target")
+    st.subheader(f"✅  Start Execution: Here are the tasks you need to do to achieve your  {goal_type} Target")
 
     updated_progress = {}
 
