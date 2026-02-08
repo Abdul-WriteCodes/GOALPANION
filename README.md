@@ -106,7 +106,7 @@ LLM API calls, token cost and system latency were observed and logged
 - Total Errors: 72 errors due to
 	- API free tier exhaustion
 	- Server overload
-- Total Cost logged traces: $2.569 
+- Total Cost of all 432 logged traces: $2.569 or $0.0059 per LLM call
 - P50 Average Latency: 35.9s
 
 ## Evaluation Result: LLM-as-a-Judge
@@ -143,7 +143,9 @@ LLM API calls, token cost and system latency were observed and logged
 - Gemini-3-pro hallucinated more by +129.41%, had more latency and cost more to run by +312.5% with respect to Gemin-3-flash
 - Opik results guided and enabled the selection of Gemini-3-flash with prompt v1.0 as the best prompt-model combination for real word deployment of Achievit at minimum cost. less hallucination risk and reduced latency
 
-> **Note:** For code related to observability and LLM-based evaluations using OPIK, check the branch [`dev_opik_LLM`](https://github.com/Abdul-WriteCodes/ACHIEVIT/tree/dev_opik_llm).
+> **Note:** Check the branch [`dev_opik_LLM`](https://github.com/Abdul-WriteCodes/ACHIEVIT/tree/dev_opik_llm).
+- For code related to observability and LLM-based evaluations using OPIK
+- Report on the Best use of Opik for Achievit
 
 ---
 ## Local Installation & Setup
