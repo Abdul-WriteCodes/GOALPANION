@@ -107,19 +107,19 @@ For each goal, the system:
 ## OPIK Observability and evaluation
 
 ## Observability
-- Total number of Trace logged: 
-- Total Errors:
-	- 52 due to API free tier exhaustion
-	- 23 due to system logic issues
-	- $0.351 as total token cost
-	- p50 duration: 16.2s
+- Total number of Trace logged: 432
+- Total Errors: 72 errors due to
+	- API free tier exhaustion
+	- Server overload
+- Total Cost logged traces: $2.569 
+- P50 Average Latency: 35.9s
 
 ## Evaluation Result: LLM-as-a-Judge
-- Evaluated Model: Google Gemini-3-Flash
-- Judge: OpenAI GPT-4
+- Evaluated Models: Google Gemini-3
+- Judge: OpenAI GPT-4o
 - Metrics: AnswerRelevance, Hallucination, Moderation
-- Size of Dataset: 15
-- Basis of Evaluation: 
+- Size of Dataset: 15 (Custom dataset)
+- Basis of Test and Evaluation: 
 	- Prompt version 1 vs Prompt version 2
 	- Gemini-3-flash-preview vs Gemini-3-pro-preview
 
@@ -132,7 +132,7 @@ For each goal, the system:
 | Change (+/-)| +0.11%          | +1.06%         | 0.00%     | −37.38%   | −5.50%       | −12.50%    |
 
 
-Using OPIK, Prompt-level experiments show that Prompt v2 reduces latency by 37% and cost by 12.5%, while maintaining similar answer relevance and hallucination risk to Prompt v1, enabling an informed efficiency–quality trade-off for real-world deployment
+Using OPIK, Prompt-level experiments show that Prompt v2.0 as compared to prompt v1.0 increase answer relevance by +0.11%, reduces latency by -37% and cost by -12.5%. But prompt version v2.0 had more hallucination risk +1.06% than Prompt v1, enabling an informed efficiency–quality trade-off for real-world deployment
 
 - Results: Model Optimisation Average scores based on 15 iterations
 
