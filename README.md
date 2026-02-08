@@ -1,19 +1,18 @@
 # ACHIEVIT  
-**An LLM-Powered System for Planning, Executing, Tracking,  and Achieving Goal Resolution**
+**A Hybrid LLM-Powered System for Achieving Academic Goal**
 
 ---
 
 ## Description
 
-**ACHIEVIT** is an AI-driven, adaptive planning system designed to help **students and researchers structure, execute, and complete academic goals**.
+**ACHIEVIT** is designed as a productivity tool to help **students and researchers** turn academic goals into realistic, executable plans that adapt as progress changes, so that they actually finish what they start.
 
 It supports tasks such as preparing for exams, completing assignments, and writing dissertations or theses, while explicitly accounting for **real-world constraints** such as:
-
 - Available study time  
 - Skill level  
 - Fixed deadlines  
 
-By combining **deterministic heuristic planning** with **LLM-based reasoning**, ACHIEVIT produces **structured, realistic, and adaptive plans** that evolve as users make progress. Goals are broken into stable milestones and executable subtasks, progress is tracked transparently, and plans are dynamically adapted to maximize the likelihood of completion.
+By combining **deterministic heuristic planning** with **LLM-based reasoning** in an hybrid architecture, ACHIEVIT produces **structured, realistic, and adaptive plans** that evolve as users make progress. Goals are broken into stable milestones and executable subtasks, progress is tracked transparently, and plans are dynamically adapted to maximize the likelihood of completion.
 
 <p align="center">
   <img src="assets/Achievit.jpg" alt="Achievit Logo" width="800"/>
@@ -25,7 +24,7 @@ By combining **deterministic heuristic planning** with **LLM-based reasoning**, 
 
 ### Hybrid Intelligence Architecture
 
-ACHIEVIT follows a **layered, human-in-the-loop architecture** that combines rule-based structure with LLM intelligence.
+ACHIEVIT follows a **layered, human-in-the-loop hybrid architecture** that combines rule-based structure with LLM intelligence.
 
 <p align="center">
   <img src="assets/Achievitecture.png" alt="Achievitecture Diagram" width="800"/>
@@ -52,62 +51,55 @@ ACHIEVIT follows a **layered, human-in-the-loop architecture** that combines rul
 This hybrid approach ensures plans remain **stable, feasible, and intelligent**, avoiding hallucinated structure while still benefiting from LLM reasoning.
 
 ---
+## Target Users
 
+- Undergraduate and postgraduate students  
+- Graduate researchers and PhD candidates  
+- Self-directed learners with academic goals  
+---
 ## Key Features & How It Works
 
 ### 🎯 Goal-Oriented Planning
 
-ACHIEVIT supports multiple academic goal types:
-
+ACHIEVIT supports multiple academic goal types that users can select as follows:
 - **Exams**
 - **Assignments**
 - **Dissertations / Theses**
 
 For each goal, the system:
 
-- Accepts a high-level user goal
+- Accepts a high-level user goal description
+- Accept constraint data such as:
+  - Daily time commitment in achieving the goal
+  - User skill level in achieving the goal 
+  - Fixed deadlines
+- Produces **realistic, milestone-based roadmap plans**
 - Generates **four fixed milestones**
 - Assigns **five executable subtasks per milestone**
-- Factors in:
-  - Daily time commitment
-  - User skill level
-  - Fixed deadlines
-- Produces **realistic, milestone-based execution plans**
-- Tracks completion at the **subtask level**
-- Dynamically adapts plans based on actual user progress
+- Tracks execution and completion at the **subtask level**
 - Analyses deadline risk and alerts users when they fall behind
-- Recommends strategies and academic resources aligned with pending work
-
----
+- Dynamically adapts plans based on actual user progress
+- Recommends strategies and resources crucial in achieving the goal
 
 ### 🧑‍🤝‍🧑 Human-in-the-Loop Interface
 
 - Built with **Streamlit** for fast, interactive iteration
-- Sidebar-driven goal and constraint input
-- Single column execution layout:
-  - Milestone and subtask execution (checkbox matrix)
-  - Plan overview, progress, and downloads of plans as docx
 - Users remain in full control of:
   - Goal definition
-  - Progress updates
-  - Plan adaptation decisions
+  - Subtask execution per milestone (checkboxes)
+  - Roadmap plan downloads of plans as docx
+  - Execution of plan adaptation based on progress
+
 ---
 ## 🔗 Live System
 
 👉 **[Try the Live Demo Here](https://achievit.streamlit.app/)**
 
-
-## Target Users
-
-- Undergraduate and postgraduate students  
-- Graduate researchers and PhD candidates  
-- Self-directed learners with academic goals  
-
 ---
 ## OPIK Observability and evaluation
 
 ## Observability
-- Total number of Trace logged: 432
+- Total number of Trace logged: 4
 - Total Errors: 72 errors due to
 	- API free tier exhaustion
 	- Server overload
