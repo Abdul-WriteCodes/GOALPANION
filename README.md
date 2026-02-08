@@ -96,7 +96,7 @@ For each goal, the system:
 👉 **[Try the Live Demo Here](https://achievit.streamlit.app/)**
 
 ---
-## System Performance and Quality: OPIK Observability and evaluation
+## System Performance Observability and Quality Evaluations: Use of OPIK
 
 Achievit is designed and developed as a production-grade system powered by **Gemini-3-flash-preview** model. Comet Opik cloud was use for behavioural observability and quality evaluations of LLM output
 
