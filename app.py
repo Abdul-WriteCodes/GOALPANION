@@ -301,7 +301,7 @@ is achieved within the stated deadline"
 
 """
 st.markdown("---")
-if st.session_state.plan_generated and st.button("🔄 Adapt Plan and Get Advice on My Progress"):
+if st.session_state.plan_generated and st.button("🔄 Adapt Plan and Get Advice on My Progress", type="primary"):
     with st.spinner("🧠Re-evaluating your progress against your planned goal and constraints..."):
         adapted_plan = generate_detailed_plan(
             goal=st.session_state.goal,
