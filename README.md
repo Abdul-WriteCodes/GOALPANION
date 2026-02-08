@@ -128,7 +128,7 @@ LLM API calls, token cost and system latency were observed and logged
 
 
 - Using OPIK, prompt-level experiments show that Prompt v2.0 as compared to prompt v1.0 increase answer relevance by +0.11%, reduces latency by -37% and cost by -12.5%.
-- But prompt version v2.0 had more hallucination risk of +1.06% than Prompt v1.0
+- Prompt version v2.0 had more hallucination risk of +1.06% than Prompt v1.0
 - An informed efficiency–quality trade-off decision was made to use prompt V1.0 for real-world deployment of a system with less hallucination risk
 
 - Results: Model Optimisation Average scores based on 15 iterations with a custom evaluation dataset
@@ -141,7 +141,7 @@ LLM API calls, token cost and system latency were observed and logged
 
 - Model optimisation result shows that Gemini-3-pro answer relevance is off by -17.43% with respect to Gemini-3-flash
 - Gemini-3-pro hallucinated more by +129.41%, had more latency and cost more to run by +312.5% with respect to Gemin-3-flash
-- Opik results guided and enabled the selection of Gemini-3-flash with prompt v1.0 as the best prompt-model combination for realword deployment of Achievit at minimum cost. less hallucination risk and reduced latency
+- Opik results guided and enabled the selection of Gemini-3-flash with prompt v1.0 as the best prompt-model combination for real word deployment of Achievit at minimum cost. less hallucination risk and reduced latency
 
 > **Note:** For code related to observability and LLM-based evaluations using OPIK, check the branch [`dev_opik_LLM`](https://github.com/Abdul-WriteCodes/ACHIEVIT/tree/dev_opik_llm).
 
